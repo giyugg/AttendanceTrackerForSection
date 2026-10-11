@@ -117,17 +117,27 @@ export default async function DashboardPage() {
 
   // 7. Display the dashboard
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900 sm:px-8">
+    <main className="min-h-screen bg-[#F6F8FC] px-4 py-8 text-[#17263D] sm:px-8">
       <div className="mx-auto max-w-6xl space-y-8">
         {/* Dashboard Header */}
-        <header>
-          <p className="text-sm font-semibold text-slate-500">ATTENDLY</p>
+        <header className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold tracking-widest text-[#2448A5]">
+              ATTENDLY
+            </p>
 
-          <h1 className="mt-2 text-3xl font-bold">BSIS 2B-G2 Dashboard</h1>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-[#172B52] sm:text-4xl">
+              Class Dashboard
+            </h1>
 
-          <p className="mt-2 text-slate-600">
-            AY {classData.academic_year} • {classData.term}
-          </p>
+            <p className="mt-2 text-sm text-slate-500">
+              BSIS 2B-G2 • AY {classData.academic_year} • {classData.term}
+            </p>
+          </div>
+
+          <div className="rounded-full bg-[#EAF0FF] px-4 py-2 text-sm font-semibold text-[#2448A5]">
+            BSIS 2B-G2
+          </div>
         </header>
 
         {/* Dashboard Navigation */}
@@ -146,19 +156,48 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
+        {/* Welcome Banner */}
+        <section className="rounded-2xl bg-gradient-to-r from-[#172B52] to-[#2448A5] p-6 text-white shadow-sm sm:p-8">
+          <p className="text-sm font-medium text-blue-100">
+            Academic Year {classData.academic_year}
+          </p>
+
+          <h2 className="mt-3 text-2xl font-bold sm:text-3xl">
+            Welcome to Attendly!
+          </h2>
+
+          <p className="mt-3 max-w-xl text-sm leading-7 text-blue-100">
+            Your central workspace for monitoring attendance, managing students,
+            and reviewing BSIS 2B-G2 class records.
+          </p>
+
+          <Link
+            href="/attendance"
+            className="mt-6 inline-flex min-h-11 items-center justify-center rounded-lg bg-white px-5 py-3 text-sm font-bold text-[#2448A5] transition-colors hover:bg-blue-50"
+          >
+            Manage Attendance →
+          </Link>
+        </section>
+
         {/* Statistics Cards */}
         <section>
-          <h2 className="mb-4 text-xl font-semibold">Attendance Overview</h2>
+          <h2 className="mb-4 text-xl font-semibold text-[#172B52]">
+            Attendance Overview
+          </h2>
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             {cards.map((card) => (
               <div
                 key={card.label}
-                className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+                className="rounded-2xl border border-[#DDE5F0] bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
               >
-                <p className="text-sm text-slate-500">{card.label}</p>
+                <p className="text-sm font-medium text-slate-500">
+                  {card.label}
+                </p>
 
-                <p className="mt-3 text-3xl font-bold">{card.value}</p>
+                <p className="mt-4 text-3xl font-bold text-[#2448A5]">
+                  {card.value}
+                </p>
               </div>
             ))}
           </div>
