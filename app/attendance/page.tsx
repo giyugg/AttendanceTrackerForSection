@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import CreateSessionForm from "./create-session-form";
 
 export default async function AttendancePage() {
+  await connection();
   const supabase = await createClient();
 
   // Verify authentication.
