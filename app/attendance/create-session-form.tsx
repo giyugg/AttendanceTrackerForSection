@@ -70,30 +70,60 @@ export default function CreateSessionForm({
 
       {/* FORM FIELDS */}
       <div className="space-y-6 p-5 sm:p-6">
-        {/* ATTENDANCE DATE */}
-        <div>
-          <label
-            htmlFor="session_date"
-            className="mb-2 block text-sm font-semibold text-[#172B52]"
-          >
-            Attendance Date
-          </label>
+        {/* ATTENDANCE DATE & SESSION TIME */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          
+          {/* ATTENDANCE DATE */}
+          <div className="min-w-0">
+            <label
+              htmlFor="session_date"
+              className="mb-2 block text-sm font-semibold text-[#172B52]"
+            >
+              Attendance Date
+            </label>
 
-          <input
-            id="session_date"
-            name="session_date"
-            type="date"
-            required
-            aria-describedby="session-date-help"
-            className="min-h-12 w-full rounded-lg border border-[#DDE5F0] bg-white px-4 py-3 text-sm text-[#17263D] outline-none transition-colors focus:border-[#2448A5] focus:ring-2 focus:ring-[#2448A5]/10"
-          />
+            <input
+              id="session_date"
+              name="session_date"
+              type="date"
+              required
+              aria-describedby="session-date-help"
+              className="min-h-12 w-full min-w-0 rounded-lg border border-[#DDE5F0] bg-white px-4 py-3 text-sm text-[#17263D] outline-none focus:border-[#2448A5] focus:ring-2 focus:ring-[#2448A5]/10"
+            />
 
-          <p
-            id="session-date-help"
-            className="mt-2 text-xs leading-5 text-slate-500"
-          >
-            Choose the date when attendance will be recorded.
-          </p>
+            <p
+              id="session-date-help"
+              className="mt-2 text-xs leading-5 text-slate-500"
+            >
+              Choose the attendance date.
+            </p>
+          </div>
+
+          {/* SESSION TIME */}
+          <div className="min-w-0">
+            <label
+              htmlFor="session_time"
+              className="mb-2 block text-sm font-semibold text-[#172B52]"
+            >
+              Session Time
+            </label>
+
+            <input
+              id="session_time"
+              name="session_time"
+              type="time"
+              required
+              aria-describedby="session-time-help"
+              className="min-h-12 w-full min-w-0 rounded-lg border border-[#DDE5F0] bg-white px-4 py-3 text-sm text-[#17263D] outline-none focus:border-[#2448A5] focus:ring-2 focus:ring-[#2448A5]/10"
+            />
+
+            <p
+              id="session-time-help"
+              className="mt-2 text-xs leading-5 text-slate-500"
+            >
+              Choose the session time.
+            </p>
+          </div>
         </div>
 
         {/* SUBJECT SELECTION */}

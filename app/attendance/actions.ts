@@ -21,6 +21,9 @@ export async function createAttendanceSession(
     formData.get("subject_id") ?? ""
   ).trim();
 
+  const sessionTime = String(
+    formData.get("session_time") ?? ""
+  ).trim();
 
   const fail = (message: string): SessionState => ({
     success: false,
@@ -30,6 +33,12 @@ export async function createAttendanceSession(
   // Validate the submitted session information.
   if (!/^\d{4}-\d{2}-\d{2}$/.test(sessionDate)) {
     return fail("Please select a valid session date.");
+  }
+
+  if (
+    !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(sessionTime)
+  ) {
+    return fail("Please select a valid session time.");
   }
 
   if (
@@ -127,10 +136,12 @@ export async function createAttendanceSession(
     .insert({
       class_id: classData.id,
       session_date: sessionDate,
+      session_time: sessionTime,
       subject_id: subject.id,
       label,
       created_by: user.id,
     });
+
 
   if (insertError) {
     if (insertError.code === "23505") {
