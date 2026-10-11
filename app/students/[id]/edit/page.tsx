@@ -65,7 +65,7 @@ export default async function EditStudentPage({ params }: PageProps) {
   // Load the existing student details.
   const { data: student, error: studentError } = await supabase
     .from("students")
-    .select("id, student_number, full_name")
+    .select("id, student_number, full_name, last_name, first_name, middle_initial")
     .eq("id", id)
     .maybeSingle();
 

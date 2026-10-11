@@ -17,9 +17,21 @@ export async function addStudent(
     formData.get("student_number") ?? ""
   ).trim().toUpperCase();
 
-  const fullName = String(
-    formData.get("full_name") ?? ""
+  const lastName = String(
+    formData.get("last_name") ?? ""
   ).trim().replace(/\s+/g, " ");
+
+  const firstName = String(
+    formData.get("first_name") ?? ""
+  ).trim().replace(/\s+/g, " ");
+
+  const middleInitial = String(
+    formData.get("middle_initial") ?? ""
+  ).trim().replace(/\.$/, "").toUpperCase();
+
+  const fullName = `${lastName}, ${firstName}${middleInitial ? ` ${middleInitial}.` : ""
+    }`;
+
 
   if (!/^[0-9]{3,32}$/.test(studentNumber)) {
     return {
@@ -28,10 +40,29 @@ export async function addStudent(
     };
   }
 
-  if (fullName.length < 2 || fullName.length > 120) {
+  if (
+    lastName.length < 1 ||
+    lastName.length > 80 ||
+    firstName.length < 1 ||
+    firstName.length > 80
+  ) {
     return {
       success: false,
-      message: "Enter a name between 2 and 120 characters.",
+      message: "First and last names must contain 1–80 characters.",
+    };
+  }
+
+  if (middleInitial && !/^[A-Z]$/.test(middleInitial)) {
+    return {
+      success: false,
+      message: "Middle initial must be one letter (A–Z).",
+    };
+  }
+
+  if (fullName.length > 120) {
+    return {
+      success: false,
+      message: "The combined student name is too long.",
     };
   }
 
@@ -66,10 +97,12 @@ export async function addStudent(
 
   // Create and enroll the student atomically.
   const { error } = await supabase.rpc(
-    "add_g2_student",
+    "add_g2_student_parts",
     {
       p_student_number: studentNumber,
-      p_full_name: fullName,
+      p_last_name: lastName,
+      p_first_name: firstName,
+      p_middle_initial: middleInitial,
     }
   );
 
