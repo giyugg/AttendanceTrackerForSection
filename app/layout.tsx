@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Geist, Lora, Quicksand } from "next/font/google";
 import { ThemeProvider } from "next-themes";
@@ -52,7 +53,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AttendlyShell>{children}</AttendlyShell>
+          <Suspense
+            fallback={
+              <main className="flex min-h-screen items-center justify-center bg-[#F6F8FC] px-4">
+                <p className="text-sm font-semibold text-[#2448A5]">
+                  Loading Attendly...
+                </p>
+              </main>
+            }
+          >
+            <AttendlyShell>{children}</AttendlyShell>
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>
