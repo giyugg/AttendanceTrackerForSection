@@ -1,18 +1,13 @@
-
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import StudentReport, {
-  type AttendanceEntry,
-} from "./student-report";
+import StudentReport, { type AttendanceEntry } from "./student-report";
 
 type PageProps = {
   params: Promise<{ id: string }>;
 };
 
-export default async function StudentAttendancePage({
-  params,
-}: PageProps) {
+export default async function StudentAttendancePage({ params }: PageProps) {
   const { id } = await params;
   const supabase = await createClient();
 
@@ -35,14 +30,13 @@ export default async function StudentAttendancePage({
   }
 
   // 2. Find BSIS 2B-G2.
-  const { data: classData, error: classError } =
-    await supabase
-      .from("classes")
-      .select("id, code, academic_year, term")
-      .eq("code", "BSIS 2B-G2")
-      .eq("academic_year", "2026-2027")
-      .eq("term", "1st Semester")
-      .maybeSingle();
+  const { data: classData, error: classError } = await supabase
+    .from("classes")
+    .select("id, code, academic_year, term")
+    .eq("code", "BSIS 2B-G2")
+    .eq("academic_year", "2026-2027")
+    .eq("term", "1st Semester")
+    .maybeSingle();
 
   if (classError) {
     throw new Error("Unable to load G2 class.");
@@ -54,13 +48,12 @@ export default async function StudentAttendancePage({
 
   // 3. Verify the student belongs to G2.
   // Include both active and inactive enrollments.
-  const { data: enrollment, error: enrollmentError } =
-    await supabase
-      .from("class_enrollments")
-      .select("student_id, is_active")
-      .eq("class_id", classData.id)
-      .eq("student_id", id)
-      .maybeSingle();
+  const { data: enrollment, error: enrollmentError } = await supabase
+    .from("class_enrollments")
+    .select("student_id, is_active")
+    .eq("class_id", classData.id)
+    .eq("student_id", id)
+    .maybeSingle();
 
   if (enrollmentError) {
     throw new Error("Unable to load student enrollment.");
@@ -71,12 +64,11 @@ export default async function StudentAttendancePage({
   }
 
   // 4. Retrieve student information.
-  const { data: student, error: studentError } =
-    await supabase
-      .from("students")
-      .select("id, student_number, full_name")
-      .eq("id", id)
-      .maybeSingle();
+  const { data: student, error: studentError } = await supabase
+    .from("students")
+    .select("id, student_number, full_name")
+    .eq("id", id)
+    .maybeSingle();
 
   if (studentError) {
     throw new Error("Unable to load student details.");
@@ -118,14 +110,9 @@ export default async function StudentAttendancePage({
 
   // 6. Retrieve session dates and names
   // for the saved attendance records.
-  const sessionIds = [
-    ...new Set(records.map((record) => record.session_id)),
-  ];
+  const sessionIds = [...new Set(records.map((record) => record.session_id))];
 
-  const sessionMap = new Map<
-    string,
-    { label: string; date: string }
-  >();
+  const sessionMap = new Map<string, { label: string; date: string }>();
 
   // Batch queries to avoid oversized ID lists.
   for (let i = 0; i < sessionIds.length; i += 100) {
@@ -158,45 +145,77 @@ export default async function StudentAttendancePage({
         return [];
       }
 
-      return [{
-        sessionId: record.session_id,
-        label: session.label,
-        date: session.date,
-        status: record.status,
-      }];
+      return [
+        {
+          sessionId: record.session_id,
+          label: session.label,
+          date: session.date,
+          status: record.status,
+        },
+      ];
     })
     .sort(
-      (a, b) =>
-        b.date.localeCompare(a.date) ||
-        b.label.localeCompare(a.label)
+      (a, b) => b.date.localeCompare(a.date) || b.label.localeCompare(a.label),
     );
 
   // 8. Display the individual report.
+
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900 sm:px-8">
-      <div className="mx-auto max-w-5xl space-y-8">
+    <main className="min-h-screen bg-[#F6F8FC] px-4 py-8 text-[#17263D] sm:px-8">
+      <div className="mx-auto max-w-6xl space-y-8">
+        {/* PAGE HEADER */}
         <header>
           <Link
             href="/students"
-            className="text-sm font-medium text-slate-600 hover:underline"
+            className="inline-flex items-center text-sm font-semibold text-[#2448A5] transition-colors hover:text-[#172B52]"
           >
             ← Back to Student Roster
           </Link>
 
-          <p className="mt-6 text-sm font-semibold text-slate-500">
-            ATTENDLY / STUDENT REPORT
-          </p>
+          <div className="mt-7">
+            <p className="text-xs font-bold uppercase tracking-widest text-[#2448A5]">
+              Attendly / Student Report
+            </p>
 
-          <h1 className="mt-2 text-3xl font-bold">
-            Student Attendance Report
-          </h1>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-[#172B52] sm:text-4xl">
+              Student Attendance Report
+            </h1>
 
-          <p className="mt-2 text-slate-600">
-            {classData.code} • AY {classData.academic_year}
-            {" • "}{classData.term}
-          </p>
+            <p className="mt-3 text-sm text-slate-500">
+              {classData.code} • AY {classData.academic_year}
+              {" • "}
+              {classData.term}
+            </p>
+          </div>
         </header>
 
+        {/* REPORT BANNER */}
+        <section className="rounded-2xl bg-gradient-to-r from-[#172B52] to-[#2448A5] p-6 text-white shadow-sm sm:p-8">
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-200">
+            Individual Attendance
+          </p>
+
+          <h2 className="mt-3 text-2xl font-bold sm:text-3xl">
+            Every student's attendance, organized.
+          </h2>
+
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-100">
+            Review individual attendance records, explore attendance statistics,
+            and download student reports for BSIS 2B-G2.
+          </p>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <span className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium">
+              BSIS 2B-G2
+            </span>
+
+            <span className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium">
+              Academic Year {classData.academic_year}
+            </span>
+          </div>
+        </section>
+
+        {/* STUDENT REPORT COMPONENT */}
         <StudentReport
           student={{
             fullName: student.full_name,
@@ -205,6 +224,11 @@ export default async function StudentAttendancePage({
           }}
           entries={entries}
         />
+
+        {/* PAGE FOOTER */}
+        <footer className="border-t border-[#DDE5F0] pt-5 text-center text-xs text-slate-400">
+          Attendly • Class Attendance Monitoring
+        </footer>
       </div>
     </main>
   );
