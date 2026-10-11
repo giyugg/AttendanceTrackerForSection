@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import AttendlyShell from "@/components/attendly-shell";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : "http://localhost:3000";
 
+// Updated application metadata
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
+  title: "Attendly | Class Attendance Monitoring",
+  description:
+    "Attendly is a class attendance monitoring system for managing students, recording attendance, and reviewing reports.",
 };
 
 const geistSans = Geist({
@@ -33,7 +36,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <AttendlyShell>{children}</AttendlyShell>
         </ThemeProvider>
       </body>
     </html>
