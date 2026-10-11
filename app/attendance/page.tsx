@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import CreateSessionForm from "./create-session-form";
+import DeleteSessionButton from "./delete-session-button";
 
 export default async function AttendancePage() {
   await connection();
@@ -83,7 +84,7 @@ export default async function AttendancePage() {
   // Retrieve existing attendance sessions.
   const { data: sessions, error: sessionError } = await supabase
     .from("attendance_sessions")
-    .select("id, session_date, label")
+    .select("id, session_date, session_time, label")
     .eq("class_id", classData.id)
     .order("session_date", { ascending: false })
     .order("created_at", { ascending: false });
@@ -260,6 +261,7 @@ export default async function AttendancePage() {
                 key={session.id}
                 className="flex flex-col gap-4 p-5 transition-colors hover:bg-[#FAFBFE] sm:flex-row sm:items-center sm:justify-between sm:p-6"
               >
+
                 {/* Session Information */}
                 <div className="min-w-0">
                   <p className="text-xs font-bold uppercase tracking-widest text-[#2448A5]">
@@ -273,15 +275,33 @@ export default async function AttendancePage() {
                   <p className="mt-2 text-sm text-slate-500">
                     Date: {session.session_date}
                   </p>
+
+                  {session.session_time && (
+                    <p className="mt-1 text-sm text-slate-500">
+                      Time: {session.session_time.slice(0, 5)}
+                    </p>
+                  )}
                 </div>
 
-                {/* Session Action */}
-                <Link
-                  href={`/attendance/${session.id}`}
-                  className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg border border-[#DDE5F0] bg-white px-5 py-3 text-sm font-semibold text-[#2448A5] transition-colors hover:border-[#2448A5] hover:bg-[#EAF0FF]"
-                >
-                  {canCreate ? "Mark Attendance →" : "View Attendance →"}
-                </Link>
+                {/* SESSION ACTIONS */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    href={`/attendance/${session.id}`}
+                    className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg border border-[#DDE5F0] bg-white px-5 py-3 text-sm font-semibold text-[#2448A5] transition-colors hover:border-[#2448A5] hover:bg-[#EAF0FF]"
+                  >
+                    {canCreate ? "Mark Attendance →" : "View Attendance →"}
+                  </Link>
+
+                  {/* DELETE SESSION — ADMIN ONLY */}
+                  {Boolean(admin) && (
+                    <DeleteSessionButton
+                      sessionId={session.id}
+                      sessionLabel={session.label}
+                      sessionDate={session.session_date}
+                      sessionTime={session.session_time}
+                    />
+                  )}
+                </div>
               </article>
             ))}
 
