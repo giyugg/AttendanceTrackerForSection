@@ -58,6 +58,28 @@ export default async function AttendancePage() {
     officer?.role === "president" ||
     officer?.role === "secretary";
 
+  // Get active subjects from Supabase.
+  let subjectOptions: {
+    id: string;
+    code: string;
+    name: string;
+  }[] = [];
+
+  if (canCreate) {
+    const { data: activeSubjects, error: subjectsError } = await supabase
+      .from("subjects")
+      .select("id, code, name")
+      .eq("class_id", classData.id)
+      .eq("is_active", true)
+      .order("code", { ascending: true });
+
+    if (subjectsError) {
+      throw new Error("Unable to load class subjects.");
+    }
+
+    subjectOptions = activeSubjects ?? [];
+  }
+
   // Retrieve existing attendance sessions.
   const { data: sessions, error: sessionError } = await supabase
     .from("attendance_sessions")
@@ -205,7 +227,7 @@ export default async function AttendancePage() {
               </p>
             </div>
 
-            <CreateSessionForm />
+            <CreateSessionForm subjects={subjectOptions} />
           </section>
         )}
 
