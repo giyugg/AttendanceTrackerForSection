@@ -1,4 +1,4 @@
-
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -138,6 +138,16 @@ export default async function DashboardPage() {
             AY {classData.academic_year} • {classData.term}
           </p>
         </header>
+
+        {/* Student Roster Navigation Button */}
+        <div>
+            <Link
+                href="/students"
+                className="inline-flex rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-700"
+            >
+                View G2 Student Roster →
+            </Link>
+        </div>
 
         {/* Statistics Cards */}
         <section>
