@@ -164,6 +164,29 @@ export default async function AttendancePage() {
         </section>
 
         {/* CREATE ATTENDANCE SESSION */}
+
+        {/* SUBJECT MANAGEMENT — ADMIN ONLY */}
+        {Boolean(admin) && (
+          <section className="flex flex-col gap-4 rounded-2xl border border-[#DDE5F0] bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div>
+              <h2 className="text-lg font-bold text-[#172B52]">
+                Class Subjects
+              </h2>
+
+              <p className="mt-2 text-sm text-slate-500">
+                Register and manage the subjects used for attendance.
+              </p>
+            </div>
+
+            <Link
+              href="/attendance/subjects"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#2448A5] px-5 py-3 text-sm font-semibold text-white hover:bg-[#172B52]"
+            >
+              Manage Subjects →
+            </Link>
+          </section>
+        )}
+
         {canCreate && (
           <section id="create-session" className="space-y-4">
             <div>
