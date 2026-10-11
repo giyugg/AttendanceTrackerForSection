@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -34,14 +33,13 @@ export default async function StudentsPage() {
   const canManageStudents = Boolean(adminRecord);
 
   // 3. Find BSIS 2B-G2.
-  const { data: classData, error: classError } =
-    await supabase
-      .from("classes")
-      .select("id, code, academic_year, term")
-      .eq("code", "BSIS 2B-G2")
-      .eq("academic_year", "2026-2027")
-      .eq("term", "1st Semester")
-      .maybeSingle();
+  const { data: classData, error: classError } = await supabase
+    .from("classes")
+    .select("id, code, academic_year, term")
+    .eq("code", "BSIS 2B-G2")
+    .eq("academic_year", "2026-2027")
+    .eq("term", "1st Semester")
+    .maybeSingle();
 
   if (classError) {
     return <p>Class error: {classError.message}</p>;
@@ -53,11 +51,10 @@ export default async function StudentsPage() {
 
   // 4. Retrieve ALL enrollments.
   // Do not filter by is_active here.
-  const { data: enrollments, error: enrollmentError } =
-    await supabase
-      .from("class_enrollments")
-      .select("student_id, is_active")
-      .eq("class_id", classData.id);
+  const { data: enrollments, error: enrollmentError } = await supabase
+    .from("class_enrollments")
+    .select("student_id, is_active")
+    .eq("class_id", classData.id);
 
   if (enrollmentError) {
     return <p>Enrollment error: {enrollmentError.message}</p>;
@@ -68,7 +65,7 @@ export default async function StudentsPage() {
     (enrollments ?? []).map((enrollment) => [
       enrollment.student_id,
       enrollment.is_active,
-    ])
+    ]),
   );
 
   const studentIds = Array.from(enrollmentMap.keys());
@@ -94,18 +91,13 @@ export default async function StudentsPage() {
   }
 
   // 7. Calculate enrollment counts.
-  const activeCount = students.filter(
-    (student) => student.is_active
-  ).length;
+  const activeCount = students.filter((student) => student.is_active).length;
 
-  const inactiveCount = students.filter(
-    (student) => !student.is_active
-  ).length;
+  const inactiveCount = students.filter((student) => !student.is_active).length;
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900 sm:px-8">
       <div className="mx-auto max-w-6xl space-y-8">
-
         <header>
           <Link
             href="/dashboard"
@@ -118,24 +110,18 @@ export default async function StudentsPage() {
             ATTENDLY / STUDENTS
           </p>
 
-          <h1 className="mt-2 text-3xl font-bold">
-            G2 Student Roster
-          </h1>
+          <h1 className="mt-2 text-3xl font-bold">G2 Student Roster</h1>
 
           <p className="mt-2 text-slate-600">
-            BSIS 2B-G2 • AY {classData.academic_year} •{" "}
-            {classData.term}
+            BSIS 2B-G2 • AY {classData.academic_year} • {classData.term}
           </p>
         </header>
 
         <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
-
           {/* Roster Header */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-5">
             <div>
-              <h2 className="text-xl font-semibold">
-                Enrolled Students
-              </h2>
+              <h2 className="text-xl font-semibold">Enrolled Students</h2>
 
               <p className="mt-1 text-sm text-slate-500">
                 {activeCount} Active • {inactiveCount} Inactive
@@ -157,18 +143,10 @@ export default async function StudentsPage() {
             <table className="w-full text-left">
               <thead className="bg-slate-50 text-sm text-slate-600">
                 <tr>
-                  <th className="px-5 py-4 font-semibold">
-                    Student Number
-                  </th>
-                  <th className="px-5 py-4 font-semibold">
-                    Full Name
-                  </th>
-                  <th className="px-5 py-4 font-semibold">
-                    Status
-                  </th>
-                  <th className="px-5 py-4 font-semibold">
-                    Actions
-                  </th>
+                  <th className="px-5 py-4 font-semibold">Student Number</th>
+                  <th className="px-5 py-4 font-semibold">Full Name</th>
+                  <th className="px-5 py-4 font-semibold">Status</th>
+                  <th className="px-5 py-4 text-right font-semibold">Actions</th>
                 </tr>
               </thead>
 
@@ -191,19 +169,24 @@ export default async function StudentsPage() {
                             : "bg-slate-100 text-slate-600"
                         }`}
                       >
-                        {student.is_active
-                          ? "Active"
-                          : "Inactive"}
+                        {student.is_active ? "Active" : "Inactive"}
                       </span>
                     </td>
 
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 align-middle">
                       {canManageStudents ? (
-                        <div className="flex flex-wrap items-start gap-2">
+                        <div className="flex flex-wrap items-start justify-end gap-2">
                           {student.is_active && (
                             <Link
                               href={`/students/${student.id}/edit`}
-                              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                              className="
+            inline-flex h-10 min-w-[72px]
+            items-center justify-center
+            whitespace-nowrap rounded-lg
+            border border-slate-300 bg-white
+            px-4 text-sm font-medium text-slate-700
+            transition-colors duration-150
+            hover:bg-slate-100"
                             >
                               Edit
                             </Link>
@@ -215,9 +198,7 @@ export default async function StudentsPage() {
                           />
                         </div>
                       ) : (
-                        <span className="text-slate-400">
-                          —
-                        </span>
+                        <span className="text-slate-400">—</span>
                       )}
                     </td>
                   </tr>
