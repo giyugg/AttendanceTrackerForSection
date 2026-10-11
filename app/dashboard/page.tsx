@@ -130,17 +130,17 @@ export default async function DashboardPage() {
           </p>
         </header>
 
-        {/* Student Roster Navigation Button */}
-        <div>
+        {/* Dashboard Navigation */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Link
             href="/students"
-            className="inline-flex rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-700"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-700 sm:w-auto"
           >
             View G2 Student Roster →
           </Link>
           <Link
             href="/attendance"
-            className="inline-flex rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-100"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-100 sm:w-auto"
           >
             Manage Attendance →
           </Link>
