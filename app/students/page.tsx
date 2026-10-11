@@ -22,6 +22,15 @@ export default async function StudentsPage() {
     redirect("/auth/login");
   }
 
+  // Check whether the current user can edit students.
+const { data: adminRecord } = await supabase
+  .from("app_admins")
+  .select("user_id")
+  .eq("user_id", user.id)
+  .maybeSingle();
+
+const canManageStudents = Boolean(adminRecord);
+
   // 2. Find BSIS 2B Group 2
   const { data: classData, error: classError } =
     await supabase
@@ -113,6 +122,12 @@ export default async function StudentsPage() {
             <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">
               {students.length} Active
             </span>
+            <Link
+                href="/students/new"
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+            >
+                + Add Student
+            </Link>
           </div>
 
           <div className="overflow-x-auto">
