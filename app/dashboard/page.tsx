@@ -138,6 +138,12 @@ export default async function DashboardPage() {
           >
             View G2 Student Roster →
           </Link>
+          <Link
+            href="/attendance"
+            className="inline-flex rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-100"
+          >
+            Manage Attendance →
+          </Link>
         </div>
 
         {/* Statistics Cards */}
