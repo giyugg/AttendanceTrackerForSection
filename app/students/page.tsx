@@ -143,6 +143,9 @@ const canManageStudents = Boolean(adminRecord);
                   <th className="px-5 py-4 font-semibold">
                     Status
                   </th>
+                  <th className="px-5 py-4 font-semibold">
+                    Actions
+                  </th>
                 </tr>
               </thead>
 
@@ -160,13 +163,26 @@ const canManageStudents = Boolean(adminRecord);
                         Active
                       </span>
                     </td>
-                  </tr>
+
+                    <td className="px-5 py-4">
+                        {canManageStudents ? (
+                            <Link
+                                href={`/students/${student.id}/edit`}
+                                className="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                            >
+                                Edit
+                            </Link>
+                        ) : (
+                            <span className="text-slate-400">—</span>
+                        )}
+                    </td>
+                </tr>
                 ))}
 
                 {students.length === 0 && (
                   <tr>
                     <td
-                      colSpan={3}
+                      colSpan={4}
                       className="px-5 py-12 text-center text-slate-500"
                     >
                       No active G2 students found.
