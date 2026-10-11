@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import EnrollmentToggle from "./enrollment-toggle";
+import DeleteStudentButton from "./delete-student-button";
 
 type Student = {
   id: string;
@@ -246,6 +247,17 @@ export default async function StudentsPage() {
                         studentId={student.id}
                         active={student.is_active}
                       />
+
+                      <EnrollmentToggle
+                        studentId={student.id}
+                        active={student.is_active}
+                      />
+
+                      <DeleteStudentButton
+                        studentId={student.id}
+                        studentNumber={student.student_number}
+                        studentName={student.full_name}
+                      />
                     </>
                   )}
                 </div>
@@ -325,6 +337,12 @@ export default async function StudentsPage() {
                             <EnrollmentToggle
                               studentId={student.id}
                               active={student.is_active}
+                            />
+                            
+                            <DeleteStudentButton
+                              studentId={student.id}
+                              studentNumber={student.student_number}
+                              studentName={student.full_name}
                             />
                           </>
                         )}
