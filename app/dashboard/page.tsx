@@ -21,7 +21,7 @@ export default async function DashboardPage() {
     await supabase
       .from("classes")
       .select("id, code, academic_year, term")
-      .eq("code", "BSIS 2B")
+      .eq("code", "BSIS 2B-G2")
       .eq("academic_year", "2026-2027")
       .eq("term", "1st Semester")
       .maybeSingle();
@@ -131,7 +131,7 @@ export default async function DashboardPage() {
           </p>
 
           <h1 className="mt-2 text-3xl font-bold">
-            BSIS 2B Dashboard
+            BSIS 2B-G2 Dashboard
           </h1>
 
           <p className="mt-2 text-slate-600">
