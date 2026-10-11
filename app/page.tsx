@@ -1,3 +1,4 @@
+import { Lora, Quicksand } from "next/font/google";
 import { DeployButton } from "@/components/deploy-button";
 import { EnvVarWarning } from "@/components/env-var-warning";
 import { AuthButton } from "@/components/auth-button";
@@ -8,6 +9,16 @@ import { SignUpUserSteps } from "@/components/tutorial/sign-up-user-steps";
 import { hasEnvVars } from "@/lib/utils";
 import Link from "next/link";
 import { Suspense } from "react";
+
+const lora = Lora({
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const quicksand = Quicksand({
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export default function Home() {
   return (
