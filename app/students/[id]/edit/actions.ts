@@ -21,9 +21,20 @@ export async function updateStudent(
     formData.get("student_number") ?? ""
   ).trim().toUpperCase();
 
-  const fullName = String(
-    formData.get("full_name") ?? ""
+  const lastName = String(
+    formData.get("last_name") ?? ""
   ).trim().replace(/\s+/g, " ");
+
+  const firstName = String(
+    formData.get("first_name") ?? ""
+  ).trim().replace(/\s+/g, " ");
+
+  const middleInitial = String(
+    formData.get("middle_initial") ?? ""
+  ).trim().replace(/\.$/, "").toUpperCase();
+
+  const fullName = `${lastName}, ${firstName}${middleInitial ? ` ${middleInitial}.` : ""
+    }`;
 
   const fail = (message: string): EditStudentState => ({
     success: false,
@@ -34,8 +45,25 @@ export async function updateStudent(
     return fail("Invalid student record.");
   }
 
-  if (fullName.length < 2 || fullName.length > 120) {
-    return fail("Full name must contain 2–120 characters.");
+  if (
+    lastName.length < 1 ||
+    lastName.length > 80 ||
+    firstName.length < 1 ||
+    firstName.length > 80
+  ) {
+    return fail(
+      "First and last names must contain 1–80 characters."
+    );
+  }
+
+  if (middleInitial && !/^[A-Z]$/.test(middleInitial)) {
+    return fail(
+      "Middle initial must be one letter (A–Z)."
+    );
+  }
+
+  if (fullName.length > 120) {
+    return fail("The combined student name is too long.");
   }
 
   const supabase = await createClient();
@@ -117,6 +145,9 @@ export async function updateStudent(
       .from("students")
       .update({
         student_number: studentNumber,
+        last_name: lastName,
+        first_name: firstName,
+        middle_initial: middleInitial || null,
         full_name: fullName,
       })
       .eq("id", studentId)
