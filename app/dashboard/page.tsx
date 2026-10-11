@@ -17,14 +17,13 @@ export default async function DashboardPage() {
   }
 
   // 2. Get the BSIS 2B class
-  const { data: classData, error: classError } =
-    await supabase
-      .from("classes")
-      .select("id, code, academic_year, term")
-      .eq("code", "BSIS 2B-G2")
-      .eq("academic_year", "2026-2027")
-      .eq("term", "1st Semester")
-      .maybeSingle();
+  const { data: classData, error: classError } = await supabase
+    .from("classes")
+    .select("id, code, academic_year, term")
+    .eq("code", "BSIS 2B-G2")
+    .eq("academic_year", "2026-2027")
+    .eq("term", "1st Semester")
+    .maybeSingle();
 
   if (classError) {
     return <p>Class error: {classError.message}</p>;
@@ -39,44 +38,44 @@ export default async function DashboardPage() {
     );
   }
 
-  // 3. Count active enrolled students
-  const { count: studentCount, error: studentError } =
-    await supabase
-      .from("class_enrollments")
-      .select("student_id", {
-        count: "exact",
-        head: true,
-      })
-      .eq("class_id", classData.id)
-      .eq("is_active", true);
+  // 3. Retrieve active enrolled students
+  const { data: activeEnrollments, error: studentError } = await supabase
+    .from("class_enrollments")
+    .select("student_id")
+    .eq("class_id", classData.id)
+    .eq("is_active", true);
 
   if (studentError) {
     return <p>Student error: {studentError.message}</p>;
   }
 
+  const activeStudentIds = (activeEnrollments ?? []).map(
+    (enrollment) => enrollment.student_id,
+  );
+
   // 4. Get the latest attendance session
-  const { data: latestSession, error: sessionError } =
-    await supabase
-      .from("attendance_sessions")
-      .select("id, label, session_date")
-      .eq("class_id", classData.id)
-      .order("session_date", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+  const { data: latestSession, error: sessionError } = await supabase
+    .from("attendance_sessions")
+    .select("id, label, session_date")
+    .eq("class_id", classData.id)
+    .order("session_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   if (sessionError) {
     return <p>Session error: {sessionError.message}</p>;
   }
 
-  // 5. Retrieve the attendance records
+  // 5. Retrieve attendance for currently active students
   let attendanceRecords: { status: string }[] = [];
 
-  if (latestSession) {
+  if (latestSession && activeStudentIds.length > 0) {
     const { data, error } = await supabase
       .from("attendance_records")
       .select("status")
-      .eq("session_id", latestSession.id);
+      .eq("session_id", latestSession.id)
+      .in("student_id", activeStudentIds);
 
     if (error) {
       return <p>Attendance error: {error.message}</p>;
@@ -86,29 +85,26 @@ export default async function DashboardPage() {
   }
 
   // 6. Calculate attendance statistics
-  const totalStudents = studentCount ?? 0;
+  const totalStudents = activeStudentIds.length;
   const totalMarked = attendanceRecords.length;
 
   const present = attendanceRecords.filter(
-    (record) => record.status === "present"
+    (record) => record.status === "present",
   ).length;
 
   const late = attendanceRecords.filter(
-    (record) => record.status === "late"
+    (record) => record.status === "late",
   ).length;
 
   const absent = attendanceRecords.filter(
-    (record) => record.status === "absent"
+    (record) => record.status === "absent",
   ).length;
 
   const excused = attendanceRecords.filter(
-    (record) => record.status === "excused"
+    (record) => record.status === "excused",
   ).length;
 
-  const notMarked = Math.max(
-    0,
-    totalStudents - totalMarked
-  );
+  const notMarked = Math.max(0, totalStudents - totalMarked);
 
   const cards = [
     { label: "Total Students", value: totalStudents },
@@ -123,16 +119,11 @@ export default async function DashboardPage() {
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900 sm:px-8">
       <div className="mx-auto max-w-6xl space-y-8">
-
         {/* Dashboard Header */}
         <header>
-          <p className="text-sm font-semibold text-slate-500">
-            ATTENDLY
-          </p>
+          <p className="text-sm font-semibold text-slate-500">ATTENDLY</p>
 
-          <h1 className="mt-2 text-3xl font-bold">
-            BSIS 2B-G2 Dashboard
-          </h1>
+          <h1 className="mt-2 text-3xl font-bold">BSIS 2B-G2 Dashboard</h1>
 
           <p className="mt-2 text-slate-600">
             AY {classData.academic_year} • {classData.term}
@@ -141,19 +132,17 @@ export default async function DashboardPage() {
 
         {/* Student Roster Navigation Button */}
         <div>
-            <Link
-                href="/students"
-                className="inline-flex rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-700"
-            >
-                View G2 Student Roster →
-            </Link>
+          <Link
+            href="/students"
+            className="inline-flex rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-700"
+          >
+            View G2 Student Roster →
+          </Link>
         </div>
 
         {/* Statistics Cards */}
         <section>
-          <h2 className="mb-4 text-xl font-semibold">
-            Attendance Overview
-          </h2>
+          <h2 className="mb-4 text-xl font-semibold">Attendance Overview</h2>
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             {cards.map((card) => (
@@ -161,13 +150,9 @@ export default async function DashboardPage() {
                 key={card.label}
                 className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
               >
-                <p className="text-sm text-slate-500">
-                  {card.label}
-                </p>
+                <p className="text-sm text-slate-500">{card.label}</p>
 
-                <p className="mt-3 text-3xl font-bold">
-                  {card.value}
-                </p>
+                <p className="mt-3 text-3xl font-bold">{card.value}</p>
               </div>
             ))}
           </div>
@@ -175,25 +160,21 @@ export default async function DashboardPage() {
 
         {/* Latest Attendance Session */}
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold">
-            Latest Attendance Session
-          </h2>
+          <h2 className="text-xl font-semibold">Latest Attendance Session</h2>
 
           {latestSession ? (
             <div className="mt-4 space-y-3">
               <p>
-                <strong>Session:</strong>{" "}
-                {latestSession.label}
+                <strong>Session:</strong> {latestSession.label}
               </p>
 
               <p>
-                <strong>Date:</strong>{" "}
-                {latestSession.session_date}
+                <strong>Date:</strong> {latestSession.session_date}
               </p>
 
               <p>
-                <strong>Attendance:</strong>{" "}
-                {totalMarked} of {totalStudents} students marked
+                <strong>Attendance:</strong> {totalMarked} of {totalStudents}{" "}
+                students marked
               </p>
 
               <div className="h-3 overflow-hidden rounded-full bg-slate-200">
@@ -202,10 +183,7 @@ export default async function DashboardPage() {
                   style={{
                     width: `${
                       totalStudents > 0
-                        ? Math.min(
-                            100,
-                            (totalMarked / totalStudents) * 100
-                          )
+                        ? Math.min(100, (totalMarked / totalStudents) * 100)
                         : 0
                     }%`,
                   }}
@@ -222,7 +200,6 @@ export default async function DashboardPage() {
         <footer className="text-center text-sm text-slate-500">
           Attendly — Class Attendance Monitoring System
         </footer>
-
       </div>
     </main>
   );
