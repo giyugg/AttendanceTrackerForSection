@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { formatSessionTime } from "@/lib/utils";
 import CreateSessionForm from "./create-session-form";
 import DeleteSessionButton from "./delete-session-button";
 
@@ -278,7 +279,7 @@ export default async function AttendancePage() {
 
                   {session.session_time && (
                     <p className="mt-1 text-sm text-slate-500">
-                      Time: {session.session_time.slice(0, 5)}
+                      Time: {formatSessionTime(session.session_time)}
                     </p>
                   )}
                 </div>

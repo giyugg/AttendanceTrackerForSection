@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 
 import { useFormStatus } from "react-dom";
+import { formatSessionTime } from "@/lib/utils";
 
 import {
   deleteSessionPermanently,
@@ -131,7 +132,7 @@ export default function DeleteSessionButton({
 
             {sessionTime && (
               <p className="mt-1 text-sm text-slate-500">
-                Time: {sessionTime.slice(0, 5)}
+                Time: {formatSessionTime(sessionTime)}
               </p>
             )}
           </div>
