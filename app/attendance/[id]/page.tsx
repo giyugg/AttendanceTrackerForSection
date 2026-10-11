@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AttendanceForm from "./attendance-form";
@@ -8,6 +9,7 @@ type PageProps = {
 };
 
 export default async function MarkAttendancePage({ params }: PageProps) {
+  await connection; // Ensure the database connection is established
   const { id } = await params;
   const supabase = await createClient();
 
