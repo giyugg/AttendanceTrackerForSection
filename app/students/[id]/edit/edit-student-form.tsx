@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import {
-  updateStudent,
-  type EditStudentState,
-} from "./actions";
+import { updateStudent, type EditStudentState } from "./actions";
 
 type Student = {
   id: string;
   student_number: string;
   full_name: string;
+  last_name: string | null;
+  first_name: string | null;
+  middle_initial: string | null;
 };
 
 const initialState: EditStudentState = {
@@ -33,26 +33,15 @@ function SaveButton() {
   );
 }
 
-export default function EditStudentForm({
-  student,
-}: {
-  student: Student;
-}) {
-  const [state, formAction] = useActionState(
-    updateStudent,
-    initialState
-  );
+export default function EditStudentForm({ student }: { student: Student }) {
+  const [state, formAction] = useActionState(updateStudent, initialState);
 
   return (
     <form
       action={formAction}
       className="overflow-hidden rounded-2xl border border-[#DDE5F0] bg-white shadow-sm"
     >
-      <input
-        type="hidden"
-        name="student_id"
-        value={student.id}
-      />
+      <input type="hidden" name="student_id" value={student.id} />
 
       {/* Form Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#DDE5F0] bg-[#FAFBFE] p-5 sm:p-6">
@@ -73,7 +62,6 @@ export default function EditStudentForm({
 
       {/* Student Information Fields */}
       <div className="space-y-6 p-5 sm:p-6">
-
         {/* Student Number */}
         <div>
           <label
@@ -95,33 +83,82 @@ export default function EditStudentForm({
           />
 
           <p className="mt-2 text-xs text-slate-500">
-            Changed student numbers must contain digits only.
-            Existing demo IDs may remain unchanged.
+            Changed student numbers must contain digits only. Existing demo IDs
+            may remain unchanged.
           </p>
         </div>
 
-        {/* Full Name */}
+        {/* Student Name Fields */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          {/* Last Name */}
+          <div className="min-w-0">
+            <label
+              htmlFor="last_name"
+              className="mb-2 block text-sm font-semibold text-[#172B52]"
+            >
+              Last Name
+            </label>
+
+            <input
+              id="last_name"
+              name="last_name"
+              type="text"
+              autoComplete="family-name"
+              defaultValue={student.last_name ?? ""}
+              placeholder="e.g. Dela Cruz"
+              required
+              maxLength={80}
+              className="min-h-12 w-full rounded-lg border border-[#DDE5F0] bg-white px-4 py-3 text-sm text-[#17263D] outline-none transition-colors placeholder:text-slate-400 focus:border-[#2448A5] focus:ring-2 focus:ring-[#2448A5]/10"
+            />
+          </div>
+
+          {/* First Name */}
+          <div className="min-w-0">
+            <label
+              htmlFor="first_name"
+              className="mb-2 block text-sm font-semibold text-[#172B52]"
+            >
+              First Name
+            </label>
+
+            <input
+              id="first_name"
+              name="first_name"
+              type="text"
+              autoComplete="given-name"
+              defaultValue={student.first_name ?? ""}
+              placeholder="e.g. Juan"
+              required
+              maxLength={80}
+              className="min-h-12 w-full rounded-lg border border-[#DDE5F0] bg-white px-4 py-3 text-sm text-[#17263D] outline-none transition-colors placeholder:text-slate-400 focus:border-[#2448A5] focus:ring-2 focus:ring-[#2448A5]/10"
+            />
+          </div>
+        </div>
+
+        {/* Middle Initial */}
         <div>
           <label
-            htmlFor="full_name"
+            htmlFor="middle_initial"
             className="mb-2 block text-sm font-semibold text-[#172B52]"
           >
-            Full Name
+            Middle Initial
+            <span className="ml-2 text-xs font-normal text-slate-400">
+              (Optional)
+            </span>
           </label>
 
           <input
-            id="full_name"
-            name="full_name"
+            id="middle_initial"
+            name="middle_initial"
             type="text"
-            defaultValue={student.full_name}
-            required
-            minLength={2}
-            maxLength={120}
-            className="min-h-12 w-full rounded-lg border border-[#DDE5F0] bg-white px-4 py-3 text-sm text-[#17263D] outline-none transition-colors focus:border-[#2448A5] focus:ring-2 focus:ring-[#2448A5]/10"
+            defaultValue={student.middle_initial ?? ""}
+            placeholder="e.g. P"
+            maxLength={2}
+            className="min-h-12 w-full rounded-lg border border-[#DDE5F0] bg-white px-4 py-3 text-sm text-[#17263D] outline-none transition-colors placeholder:text-slate-400 focus:border-[#2448A5] focus:ring-2 focus:ring-[#2448A5]/10 sm:max-w-40"
           />
 
           <p className="mt-2 text-xs text-slate-500">
-            Enter the corrected full name.
+            Enter one letter, or leave blank if not applicable.
           </p>
         </div>
 
