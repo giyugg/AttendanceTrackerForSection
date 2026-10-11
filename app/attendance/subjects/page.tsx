@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SubjectForm from "./subject-form";
 import { setSubjectActive } from "./actions";
+import DeleteSubjectButton from "./delete-subject-button";
 
 export default async function SubjectsPage() {
   await connection();
@@ -156,23 +157,35 @@ export default async function SubjectsPage() {
                       {subject.is_active ? "Active" : "Inactive"}
                     </span>
                   </div>
+                  {/* SUBJECT ACTIONS */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <form action={setSubjectActive}>
+                      <input
+                        type="hidden"
+                        name="subject_id"
+                        value={subject.id}
+                      />
 
-                  <form action={setSubjectActive}>
-                    <input type="hidden" name="subject_id" value={subject.id} />
+                      <input
+                        type="hidden"
+                        name="next_active"
+                        value={subject.is_active ? "false" : "true"}
+                      />
 
-                    <input
-                      type="hidden"
-                      name="next_active"
-                      value={subject.is_active ? "false" : "true"}
+                      <button
+                        type="submit"
+                        className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-[#DDE5F0] bg-white px-5 py-3 text-sm font-semibold text-[#2448A5] hover:bg-[#EAF0FF] sm:w-auto"
+                      >
+                        {subject.is_active ? "Deactivate" : "Activate"}
+                      </button>
+                    </form>
+                    {/* NEW DELETE BUTTON */}
+                    <DeleteSubjectButton
+                      subjectId={subject.id}
+                      subjectCode={subject.code}
+                      subjectName={subject.name}
                     />
-
-                    <button
-                      type="submit"
-                      className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-[#DDE5F0] bg-white px-5 py-3 text-sm font-semibold text-[#2448A5] hover:bg-[#EAF0FF] sm:w-auto"
-                    >
-                      {subject.is_active ? "Deactivate" : "Activate"}
-                    </button>
-                  </form>
+                  </div>
                 </article>
               ))}
             </div>
