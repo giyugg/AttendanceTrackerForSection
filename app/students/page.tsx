@@ -248,11 +248,6 @@ export default async function StudentsPage() {
                         active={student.is_active}
                       />
 
-                      <EnrollmentToggle
-                        studentId={student.id}
-                        active={student.is_active}
-                      />
-
                       <DeleteStudentButton
                         studentId={student.id}
                         studentNumber={student.student_number}
