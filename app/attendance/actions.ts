@@ -17,9 +17,10 @@ export async function createAttendanceSession(
     formData.get("session_date") ?? ""
   ).trim();
 
-  const label = String(
-    formData.get("label") ?? ""
+  const subjectId = String(
+    formData.get("subject_id") ?? ""
   ).trim();
+
 
   const fail = (message: string): SessionState => ({
     success: false,
@@ -31,11 +32,14 @@ export async function createAttendanceSession(
     return fail("Please select a valid session date.");
   }
 
-  if (label.length < 3 || label.length > 80) {
-    return fail(
-      "Session name must contain 3–80 characters."
-    );
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      subjectId
+    )
+  ) {
+    return fail("Please select a valid subject.");
   }
+
 
   const supabase = await createClient();
 
@@ -94,13 +98,36 @@ export async function createAttendanceSession(
       "Only authorized officers can create sessions."
     );
   }
+  // Verify the selected subject in Supabase.
+  const { data: subject, error: subjectError } =
+    await supabase
+      .from("subjects")
+      .select("id, code, name")
+      .eq("id", subjectId)
+      .eq("class_id", classData.id)
+      .eq("is_active", true)
+      .maybeSingle();
 
-  // Save the attendance session.
+  if (subjectError || !subject) {
+    return fail(
+      "The selected subject is unavailable. Please choose an active subject."
+    );
+  }
+
+  // Generate the attendance session name
+  // from the selected subject.
+  const label = `${subject.code} — ${subject.name}`.slice(
+    0,
+    80
+  );
+
+  // Save the attendance session with its subject.
   const { error: insertError } = await supabase
     .from("attendance_sessions")
     .insert({
       class_id: classData.id,
       session_date: sessionDate,
+      subject_id: subject.id,
       label,
       created_by: user.id,
     });
@@ -108,7 +135,7 @@ export async function createAttendanceSession(
   if (insertError) {
     if (insertError.code === "23505") {
       return fail(
-        "An attendance session with this name and date already exists."
+        "An attendance session for this subject and date already exists."
       );
     }
 
