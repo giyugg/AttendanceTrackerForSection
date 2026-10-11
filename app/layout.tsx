@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Lora, Quicksand } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import AttendlyShell from "@/components/attendly-shell";
 import "./globals.css";
@@ -8,7 +8,6 @@ const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : "http://localhost:3000";
 
-// Updated application metadata
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: "Attendly | Class Attendance Monitoring",
@@ -16,10 +15,25 @@ export const metadata: Metadata = {
     "Attendly is a class attendance monitoring system for managing students, recording attendance, and reviewing reports.",
 };
 
+// Preserve the starter font variable for compatibility.
 const geistSans = Geist({
   variable: "--font-geist-sans",
   display: "swap",
   subsets: ["latin"],
+});
+
+// Headings
+const lora = Lora({
+  subsets: ["latin"],
+  variable: "--font-lora",
+  display: "swap",
+});
+
+// Body text, buttons, forms, and navigation
+const quicksand = Quicksand({
+  subsets: ["latin"],
+  variable: "--font-quicksand",
+  display: "swap",
 });
 
 export default function RootLayout({
@@ -29,7 +43,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.className} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${lora.variable} ${quicksand.variable} antialiased`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

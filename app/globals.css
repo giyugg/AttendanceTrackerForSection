@@ -66,3 +66,36 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ==========================================
+   ATTENDLY — GLOBAL TYPOGRAPHY
+   ========================================== */
+
+@layer base {
+
+  /* Default font for the entire application */
+  body {
+    font-family: var(--font-quicksand),
+      ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Headings */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-lora),
+      Georgia, serif;
+  }
+
+  /* Form controls and buttons */
+  button,
+  input,
+  select,
+  textarea {
+    font-family: var(--font-quicksand),
+      ui-sans-serif, system-ui, sans-serif;
+  }
+}
