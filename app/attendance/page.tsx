@@ -90,6 +90,16 @@ export default async function AttendancePage() {
           </p>
         </header>
 
+        {/* Attendance History Navigation */}
+        <div>
+          <Link
+            href="/attendance/history"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-700"
+          >
+            View Attendance History →
+          </Link>
+        </div>
+
         {canCreate && <CreateSessionForm />}
 
         <section className="rounded-xl border border-slate-200 bg-white shadow-sm">

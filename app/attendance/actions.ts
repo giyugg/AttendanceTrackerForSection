@@ -120,6 +120,7 @@ export async function createAttendanceSession(
   // Refresh pages using attendance data.
   revalidatePath("/attendance");
   revalidatePath("/dashboard");
+  revalidatePath("/attendance/history");
 
   return {
     success: true,
