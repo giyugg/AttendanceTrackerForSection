@@ -2,17 +2,19 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import EnrollmentToggle from "./enrollment-toggle";
 
 type Student = {
   id: string;
   student_number: string;
   full_name: string;
+  is_active: boolean;
 };
 
 export default async function StudentsPage() {
   const supabase = await createClient();
 
-  // 1. Check if the user is authenticated
+  // 1. Verify authentication.
   const {
     data: { user },
     error: authError,
@@ -22,16 +24,16 @@ export default async function StudentsPage() {
     redirect("/auth/login");
   }
 
-  // Check whether the current user can edit students.
-const { data: adminRecord } = await supabase
-  .from("app_admins")
-  .select("user_id")
-  .eq("user_id", user.id)
-  .maybeSingle();
+  // 2. Check administrator permissions.
+  const { data: adminRecord } = await supabase
+    .from("app_admins")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
 
-const canManageStudents = Boolean(adminRecord);
+  const canManageStudents = Boolean(adminRecord);
 
-  // 2. Find BSIS 2B Group 2
+  // 3. Find BSIS 2B-G2.
   const { data: classData, error: classError } =
     await supabase
       .from("classes")
@@ -49,25 +51,31 @@ const canManageStudents = Boolean(adminRecord);
     return <p>G2 class not found or access denied.</p>;
   }
 
-  // 3. Get active G2 enrollments
+  // 4. Retrieve ALL enrollments.
+  // Do not filter by is_active here.
   const { data: enrollments, error: enrollmentError } =
     await supabase
       .from("class_enrollments")
-      .select("student_id")
-      .eq("class_id", classData.id)
-      .eq("is_active", true);
+      .select("student_id, is_active")
+      .eq("class_id", classData.id);
 
   if (enrollmentError) {
     return <p>Enrollment error: {enrollmentError.message}</p>;
   }
 
-  const studentIds = (enrollments ?? []).map(
-    (enrollment) => enrollment.student_id
+  // 5. Map student IDs to enrollment status.
+  const enrollmentMap = new Map(
+    (enrollments ?? []).map((enrollment) => [
+      enrollment.student_id,
+      enrollment.is_active,
+    ])
   );
 
-  // 4. Get the enrolled students' information
+  const studentIds = Array.from(enrollmentMap.keys());
+
   let students: Student[] = [];
 
+  // 6. Retrieve student details.
   if (studentIds.length > 0) {
     const { data, error } = await supabase
       .from("students")
@@ -79,13 +87,25 @@ const canManageStudents = Boolean(adminRecord);
       return <p>Student error: {error.message}</p>;
     }
 
-    students = data ?? [];
+    students = (data ?? []).map((student) => ({
+      ...student,
+      is_active: enrollmentMap.get(student.id) === true,
+    }));
   }
 
-  // 5. Display the roster
+  // 7. Calculate enrollment counts.
+  const activeCount = students.filter(
+    (student) => student.is_active
+  ).length;
+
+  const inactiveCount = students.filter(
+    (student) => !student.is_active
+  ).length;
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900 sm:px-8">
       <div className="mx-auto max-w-6xl space-y-8">
+
         <header>
           <Link
             href="/dashboard"
@@ -109,27 +129,30 @@ const canManageStudents = Boolean(adminRecord);
         </header>
 
         <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+
+          {/* Roster Header */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-5">
             <div>
               <h2 className="text-xl font-semibold">
                 Enrolled Students
               </h2>
+
               <p className="mt-1 text-sm text-slate-500">
-                Active students in Group 2
+                {activeCount} Active • {inactiveCount} Inactive
               </p>
             </div>
 
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">
-              {students.length} Active
-            </span>
-            <Link
+            {canManageStudents && (
+              <Link
                 href="/students/new"
                 className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
-            >
+              >
                 + Add Student
-            </Link>
+              </Link>
+            )}
           </div>
 
+          {/* Student Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-slate-50 text-sm text-slate-600">
@@ -155,28 +178,49 @@ const canManageStudents = Boolean(adminRecord);
                     <td className="px-5 py-4 text-sm">
                       {student.student_number}
                     </td>
+
                     <td className="px-5 py-4 text-sm font-medium">
                       {student.full_name}
                     </td>
+
                     <td className="px-5 py-4">
-                      <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
-                        Active
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                          student.is_active
+                            ? "bg-green-50 text-green-700"
+                            : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {student.is_active
+                          ? "Active"
+                          : "Inactive"}
                       </span>
                     </td>
 
                     <td className="px-5 py-4">
-                        {canManageStudents ? (
+                      {canManageStudents ? (
+                        <div className="flex flex-wrap items-start gap-2">
+                          {student.is_active && (
                             <Link
-                                href={`/students/${student.id}/edit`}
-                                className="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                              href={`/students/${student.id}/edit`}
+                              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
                             >
-                                Edit
+                              Edit
                             </Link>
-                        ) : (
-                            <span className="text-slate-400">—</span>
-                        )}
+                          )}
+
+                          <EnrollmentToggle
+                            studentId={student.id}
+                            active={student.is_active}
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">
+                          —
+                        </span>
+                      )}
                     </td>
-                </tr>
+                  </tr>
                 ))}
 
                 {students.length === 0 && (
@@ -185,7 +229,7 @@ const canManageStudents = Boolean(adminRecord);
                       colSpan={4}
                       className="px-5 py-12 text-center text-slate-500"
                     >
-                      No active G2 students found.
+                      No students found in BSIS 2B-G2.
                     </td>
                   </tr>
                 )}
