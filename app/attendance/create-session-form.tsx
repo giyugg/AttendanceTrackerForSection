@@ -2,10 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import {
-  createAttendanceSession,
-  type SessionState,
-} from "./actions";
+import { createAttendanceSession, type SessionState } from "./actions";
 
 const initialState: SessionState = {
   success: false,
@@ -13,13 +10,13 @@ const initialState: SessionState = {
 };
 
 // Submit Button with Loading State
-function SubmitButton() {
+function SubmitButton({ disabled = false }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
 
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={pending || disabled}
       className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#2448A5] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#172B52] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2448A5] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
     >
       <span aria-hidden="true">+</span>
@@ -29,10 +26,20 @@ function SubmitButton() {
   );
 }
 
-export default function CreateSessionForm() {
+type SubjectOption = {
+  id: string;
+  code: string;
+  name: string;
+};
+
+export default function CreateSessionForm({
+  subjects,
+}: {
+  subjects: SubjectOption[];
+}) {
   const [state, formAction] = useActionState(
     createAttendanceSession,
-    initialState
+    initialState,
   );
 
   return (
@@ -63,7 +70,6 @@ export default function CreateSessionForm() {
 
       {/* FORM FIELDS */}
       <div className="space-y-6 p-5 sm:p-6">
-
         {/* ATTENDANCE DATE */}
         <div>
           <label
@@ -90,34 +96,48 @@ export default function CreateSessionForm() {
           </p>
         </div>
 
-        {/* SESSION NAME */}
+        {/* SUBJECT SELECTION */}
         <div>
           <label
-            htmlFor="label"
+            htmlFor="subject_id"
             className="mb-2 block text-sm font-semibold text-[#172B52]"
           >
-            Session Name
+            Subject
           </label>
 
-          <input
-            id="label"
-            name="label"
-            type="text"
-            placeholder="e.g. Morning Attendance"
-            minLength={3}
-            maxLength={80}
+          <select
+            id="subject_id"
+            name="subject_id"
+            defaultValue=""
             required
-            aria-describedby="session-name-help"
-            className="min-h-12 w-full rounded-lg border border-[#DDE5F0] bg-white px-4 py-3 text-sm text-[#17263D] outline-none transition-colors placeholder:text-slate-400 focus:border-[#2448A5] focus:ring-2 focus:ring-[#2448A5]/10"
-          />
+            disabled={subjects.length === 0}
+            aria-describedby="subject-help"
+            className="min-h-12 w-full rounded-lg border border-[#DDE5F0] bg-white px-4 py-3 text-sm text-[#17263D] outline-none transition-colors focus:border-[#2448A5] focus:ring-2 focus:ring-[#2448A5]/10 disabled:bg-slate-50"
+          >
+            <option value="" disabled>
+              Select a subject
+            </option>
+
+            {subjects.map((subject) => (
+              <option key={subject.id} value={subject.id}>
+                {subject.code} — {subject.name}
+              </option>
+            ))}
+          </select>
 
           <p
-            id="session-name-help"
+            id="subject-help"
             className="mt-2 text-xs leading-5 text-slate-500"
           >
-            Use a recognizable name to easily identify
-            this session in attendance history.
+            Choose the subject for this attendance session.
           </p>
+
+          {subjects.length === 0 && (
+            <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+              No active subjects available. Please add or activate a subject
+              first.
+            </p>
+          )}
         </div>
 
         {/* INFORMATION NOTE */}
@@ -127,9 +147,8 @@ export default function CreateSessionForm() {
           </p>
 
           <p className="mt-2 text-xs leading-6 text-slate-600">
-            Make sure the selected date and session name
-            are correct. Once created, the session will
-            appear in your attendance records.
+            Make sure the selected date and session name are correct. Once
+            created, the session will appear in your attendance records.
           </p>
         </div>
 
@@ -155,7 +174,7 @@ export default function CreateSessionForm() {
           Attendance session • BSIS 2B-G2
         </p>
 
-        <SubmitButton />
+        <SubmitButton disabled={subjects.length === 0} />
       </div>
     </form>
   );
