@@ -146,7 +146,9 @@ export default async function StudentsPage() {
                   <th className="px-5 py-4 font-semibold">Student Number</th>
                   <th className="px-5 py-4 font-semibold">Full Name</th>
                   <th className="px-5 py-4 font-semibold">Status</th>
-                  <th className="px-5 py-4 text-right font-semibold">Actions</th>
+                  <th className="px-5 py-4 text-right font-semibold">
+                    Actions
+                  </th>
                 </tr>
               </thead>
 
@@ -174,32 +176,34 @@ export default async function StudentsPage() {
                     </td>
 
                     <td className="px-5 py-4 align-middle">
-                      {canManageStudents ? (
-                        <div className="flex flex-wrap items-start justify-end gap-2">
-                          {student.is_active && (
-                            <Link
-                              href={`/students/${student.id}/edit`}
-                              className="
-            inline-flex h-10 min-w-[72px]
-            items-center justify-center
-            whitespace-nowrap rounded-lg
-            border border-slate-300 bg-white
-            px-4 text-sm font-medium text-slate-700
-            transition-colors duration-150
-            hover:bg-slate-100"
-                            >
-                              Edit
-                            </Link>
-                          )}
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        {/* Available to officers with roster access */}
+                        <Link
+                          href={`/students/${student.id}/attendance`}
+                          className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                        >
+                          History
+                        </Link>
 
-                          <EnrollmentToggle
-                            studentId={student.id}
-                            active={student.is_active}
-                          />
-                        </div>
-                      ) : (
-                        <span className="text-slate-400">—</span>
-                      )}
+                        {/* Administrator-only student management */}
+                        {canManageStudents && (
+                          <>
+                            {student.is_active && (
+                              <Link
+                                href={`/students/${student.id}/edit`}
+                                className="inline-flex h-10 min-w-[72px] items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                              >
+                                Edit
+                              </Link>
+                            )}
+
+                            <EnrollmentToggle
+                              studentId={student.id}
+                              active={student.is_active}
+                            />
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
