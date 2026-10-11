@@ -51,8 +51,13 @@ export default async function EditStudentPage({
       .maybeSingle();
 
   if (classError || !classData) {
-    notFound();
-  }
+  return (
+    <p>
+      DEBUG: Class lookup failed.
+      {classError?.message}
+    </p>
+  );
+}
 
   // Verify this student is actively enrolled in G2.
   const { data: enrollment, error: enrollmentError } =
@@ -65,8 +70,13 @@ export default async function EditStudentPage({
       .maybeSingle();
 
   if (enrollmentError || !enrollment) {
-    notFound();
-  }
+  return (
+    <p>
+      DEBUG: Student enrollment not found.
+      {enrollmentError?.message}
+    </p>
+  );
+}
 
   // Load the existing student details.
   const { data: student, error: studentError } =
@@ -77,7 +87,12 @@ export default async function EditStudentPage({
       .maybeSingle();
 
   if (studentError || !student) {
-    notFound();
+    return (
+        <p>
+            DEBUG: Student record not found.
+            {studentError?.message}
+        </p>
+    );
   }
 
   return (
