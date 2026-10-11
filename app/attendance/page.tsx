@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -18,14 +17,13 @@ export default async function AttendancePage() {
   }
 
   // Retrieve BSIS 2B-G2.
-  const { data: classData, error: classError } =
-    await supabase
-      .from("classes")
-      .select("id, code, academic_year, term")
-      .eq("code", "BSIS 2B-G2")
-      .eq("academic_year", "2026-2027")
-      .eq("term", "1st Semester")
-      .maybeSingle();
+  const { data: classData, error: classError } = await supabase
+    .from("classes")
+    .select("id, code, academic_year, term")
+    .eq("code", "BSIS 2B-G2")
+    .eq("academic_year", "2026-2027")
+    .eq("term", "1st Semester")
+    .maybeSingle();
 
   if (classError) {
     throw new Error(classError.message);
@@ -36,20 +34,18 @@ export default async function AttendancePage() {
   }
 
   // Determine whether the user can create sessions.
-  const { data: admin, error: adminError } =
-    await supabase
-      .from("app_admins")
-      .select("user_id")
-      .eq("user_id", user.id)
-      .maybeSingle();
+  const { data: admin, error: adminError } = await supabase
+    .from("app_admins")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
 
-  const { data: officer, error: officerError } =
-    await supabase
-      .from("class_officers")
-      .select("role")
-      .eq("class_id", classData.id)
-      .eq("user_id", user.id)
-      .maybeSingle();
+  const { data: officer, error: officerError } = await supabase
+    .from("class_officers")
+    .select("role")
+    .eq("class_id", classData.id)
+    .eq("user_id", user.id)
+    .maybeSingle();
 
   if (adminError || officerError) {
     throw new Error("Unable to verify permissions.");
@@ -61,13 +57,12 @@ export default async function AttendancePage() {
     officer?.role === "secretary";
 
   // Retrieve existing attendance sessions.
-  const { data: sessions, error: sessionError } =
-    await supabase
-      .from("attendance_sessions")
-      .select("id, session_date, label")
-      .eq("class_id", classData.id)
-      .order("session_date", { ascending: false })
-      .order("created_at", { ascending: false });
+  const { data: sessions, error: sessionError } = await supabase
+    .from("attendance_sessions")
+    .select("id, session_date, label")
+    .eq("class_id", classData.id)
+    .order("session_date", { ascending: false })
+    .order("created_at", { ascending: false });
 
   if (sessionError) {
     throw new Error(sessionError.message);
@@ -88,13 +83,10 @@ export default async function AttendancePage() {
             ATTENDLY / ATTENDANCE
           </p>
 
-          <h1 className="mt-2 text-3xl font-bold">
-            Attendance Management
-          </h1>
+          <h1 className="mt-2 text-3xl font-bold">Attendance Management</h1>
 
           <p className="mt-2 text-slate-600">
-            BSIS 2B-G2 • AY {classData.academic_year} •{" "}
-            {classData.term}
+            BSIS 2B-G2 • AY {classData.academic_year} • {classData.term}
           </p>
         </header>
 
@@ -102,9 +94,7 @@ export default async function AttendancePage() {
 
         <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 p-5">
-            <h2 className="text-xl font-semibold">
-              Attendance Sessions
-            </h2>
+            <h2 className="text-xl font-semibold">Attendance Sessions</h2>
             <p className="mt-1 text-sm text-slate-500">
               {sessions?.length ?? 0} sessions recorded
             </p>
@@ -117,17 +107,19 @@ export default async function AttendancePage() {
                 className="flex flex-wrap items-center justify-between gap-3 p-5"
               >
                 <div>
-                  <p className="font-semibold">
-                    {session.label}
-                  </p>
+                  <p className="font-semibold">{session.label}</p>
+
                   <p className="mt-1 text-sm text-slate-500">
                     {session.session_date}
                   </p>
                 </div>
 
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
-                  Session Created
-                </span>
+                <Link
+                  href={`/attendance/${session.id}`}
+                  className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100"
+                >
+                  {canCreate ? "Mark Attendance →" : "View Attendance →"}
+                </Link>
               </div>
             ))}
 
