@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
+import { LogoutButton } from "@/components/logout-button";
 
 const navItems = [
   {
@@ -166,10 +167,14 @@ export default function AttendlyShell({ children }: { children: ReactNode }) {
         </div>
 
         {/* SIDEBAR FOOTER */}
-        <div className="mt-auto rounded-xl bg-[#F6F8FC] p-4">
-          <p className="text-sm font-bold text-[#172B52]">BSIS 2B-G2</p>
+        <div className="mt-auto space-y-3">
+          <div className="rounded-xl bg-[#F6F8FC] p-4">
+            <p className="text-sm font-bold text-[#172B52]">BSIS 2B-G2</p>
 
-          <p className="mt-1 text-xs text-slate-500">Academic Year 2026–2027</p>
+            <p className="mt-1 text-xs text-slate-500">Academic Year 2026–2027</p>
+          </div>
+
+          <LogoutButton className="h-11 w-full rounded-xl" />
         </div>
       </aside>
 
@@ -222,6 +227,7 @@ export default function AttendlyShell({ children }: { children: ReactNode }) {
             <p className="mt-4 border-t border-[#DDE5F0] pt-4 text-xs text-slate-500">
               BSIS 2B-G2 • AY 2026–2027
             </p>
+            <LogoutButton className="mt-4 h-11 w-full rounded-xl" />
           </nav>
         </header>
 

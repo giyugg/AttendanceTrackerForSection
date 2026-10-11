@@ -64,9 +64,16 @@ export default function Home() {
 
             <Link
               href="/auth/login"
-              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#2448A5] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#172B52]"
+              className="hidden min-h-11 items-center justify-center rounded-lg border border-[#DDE5F0] bg-white px-5 py-3 text-sm font-semibold text-[#172B52] transition-colors hover:bg-[#EAF0FF] sm:inline-flex"
             >
               Sign In
+            </Link>
+
+            <Link
+              href="/auth/sign-up"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#2448A5] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#172B52]"
+            >
+              Sign Up
             </Link>
           </div>
         </nav>
@@ -115,10 +122,10 @@ export default function Home() {
             </Link>
 
             <Link
-              href="#features"
+              href="/auth/sign-up"
               className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-[#DDE5F0] bg-white px-8 py-3 text-sm font-semibold text-[#172B52] transition-colors hover:bg-[#EAF0FF] sm:w-auto"
             >
-              Explore Features
+              Create an Account
             </Link>
           </div>
 
@@ -275,7 +282,7 @@ export default function Home() {
           </p>
 
           <p className="text-xs text-slate-400">
-            Built for a more organized classroom.
+            Designed &amp; developed by Kyle A. Acuña
           </p>
         </div>
       </footer>
