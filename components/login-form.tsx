@@ -1,17 +1,8 @@
+
 "use client";
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -24,11 +15,17 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
   const router = useRouter();
 
-  const handleLogin = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  // EXISTING SUPABASE LOGIN LOGIC
+  const handleLogin = async (
+    e: React.SubmitEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
+
     const supabase = createClient();
+
     setIsLoading(true);
     setError(null);
 
@@ -37,75 +34,142 @@ export function LoginForm({
         email,
         password,
       });
+
       if (error) throw error;
-      // Update this route to redirect to an authenticated route. The user already has an active session.
+
+      // Redirect to Attendly Dashboard
       router.push("/dashboard");
       router.refresh();
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "An error occurred"
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </Link>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
-              </Button>
-            </div>
-            <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <Link
-                href="/auth/sign-up"
-                className="underline underline-offset-4"
-              >
-                Sign up
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+    <div
+      className={cn("w-full", className)}
+      {...props}
+    >
+
+      {/* FORM HEADING */}
+      <div className="mb-8">
+        <p className="text-xs font-bold uppercase tracking-widest text-[#2448A5]">
+          Welcome to Attendly
+        </p>
+
+        <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#172B52] sm:text-4xl">
+          Welcome back!
+        </h2>
+
+        <p className="mt-3 text-sm leading-7 text-slate-500">
+          Sign in to your account to access your
+          class attendance workspace.
+        </p>
+      </div>
+
+      {/* LOGIN FORM */}
+      <form
+        onSubmit={handleLogin}
+        className="space-y-6"
+        aria-busy={isLoading}
+      >
+
+        {/* EMAIL */}
+        <div>
+          <label
+            htmlFor="email"
+            className="mb-2 block text-sm font-semibold text-[#172B52]"
+          >
+            Email Address
+          </label>
+
+          <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="Enter your email address"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="min-h-12 w-full rounded-xl border border-[#DDE5F0] bg-white px-4 py-3 text-sm text-[#17263D] outline-none transition-colors placeholder:text-slate-400 focus:border-[#2448A5] focus:ring-2 focus:ring-[#2448A5]/10"
+          />
+        </div>
+
+        {/* PASSWORD */}
+        <div>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <label
+              htmlFor="password"
+              className="text-sm font-semibold text-[#172B52]"
+            >
+              Password
+            </label>
+
+            <Link
+              href="/auth/forgot-password"
+              className="text-xs font-semibold text-[#2448A5] hover:text-[#172B52] hover:underline"
+            >
+              Forgot Password?
+            </Link>
+          </div>
+
+          <input
+            id="password"
+            name="password"
+            type="password"
+            placeholder="Enter your password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="min-h-12 w-full rounded-xl border border-[#DDE5F0] bg-white px-4 py-3 text-sm text-[#17263D] outline-none transition-colors placeholder:text-slate-400 focus:border-[#2448A5] focus:ring-2 focus:ring-[#2448A5]/10"
+          />
+        </div>
+
+        {/* ERROR MESSAGE */}
+        {error && (
+          <div
+            role="alert"
+            className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-700"
+          >
+            {error}
+          </div>
+        )}
+
+        {/* SUBMIT BUTTON */}
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2448A5] px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#172B52] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2448A5] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isLoading ? "Signing In..." : "Sign In →"}
+        </button>
+
+        {/* SIGN UP NAVIGATION */}
+        <div className="border-t border-[#DDE5F0] pt-6 text-center">
+          <p className="text-sm text-slate-500">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/auth/sign-up"
+              className="font-bold text-[#2448A5] hover:text-[#172B52] hover:underline"
+            >
+              Create an Account
+            </Link>
+          </p>
+        </div>
+      </form>
+
+      {/* FORM FOOTER */}
+      <p className="mt-8 text-center text-xs leading-6 text-slate-400">
+        Built for BSIS 2B-G2 • Academic Year 2026–2027
+      </p>
     </div>
   );
 }
