@@ -190,7 +190,7 @@ export default function AttendanceForm({
 
         <p className="mt-2 text-sm text-slate-500">
           {canMark
-            ? "Select one attendance status for each student."
+            ? "Select one attendance status for each student. Select it again to clear it."
             : "View attendance statuses recorded for this session."}
         </p>
       </div>
@@ -279,6 +279,18 @@ export default function AttendanceForm({
                           value={option.value}
                           checked={isSelected}
                           disabled={!canMark}
+                          onClick={(event) => {
+                            if (!isSelected) {
+                              return;
+                            }
+
+                            event.preventDefault();
+                            setStatuses((previous) => {
+                              const next = { ...previous };
+                              delete next[student.id];
+                              return next;
+                            });
+                          }}
                           onChange={() => {
                             setStatuses((previous) => ({
                               ...previous,
