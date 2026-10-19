@@ -16,7 +16,7 @@ The current application is built for **BSIS 2B-G2, Academic Year 2026–2027, 1s
 | Attendance sessions | Create a session for an active subject with a date and time, then record or update attendance for active students. |
 | Attendance reports | Search recent session summaries by name and date, or filter a student's saved history by attendance status and date range. |
 | CSV exports | Download filtered class session summaries and individual student attendance reports for use in a spreadsheet. |
-| Account access | Sign up, sign in with email and password, recover a forgotten password, and access features according to assigned permissions. |
+| Account access | Request an administrator-created account, sign in with email and password, recover a forgotten password, and access features according to assigned permissions. |
 
 The interface adapts to desktop and mobile screens, with shared navigation for the dashboard, students, attendance, and reports.
 
@@ -38,10 +38,14 @@ Class reports cover the **50 most recent sessions**. Individual student reports 
 
 | Role | Management permissions |
 | --- | --- |
-| Application administrator | Manage students, enrollments, and subjects; create sessions; record attendance; and permanently delete students or sessions. |
+| Application administrator | Create user accounts; manage students, enrollments, and subjects; create sessions; record attendance; and permanently delete students or sessions. |
 | Class president or secretary | Create attendance sessions and record or update attendance for the assigned class. |
 
 Other signed-in users can view records where permitted by the Supabase database policies. Creating an account does not automatically grant administrator or officer access; assignments are maintained in `app_admins` and `class_officers`.
+
+Public account registration is disabled. Need an account? Email [2025009221@ms.bulsu.edu.ph](mailto:2025009221@ms.bulsu.edu.ph) from your educational email address. Personal email providers such as Gmail are not accepted.
+
+Administrators listed in `app_admins` can open `/admin/accounts` to create an account with an educational email address and a temporary password of at least eight characters. Verify the requester's educational email ownership before creating the account: this operation marks the email as confirmed. It does not send a welcome or invitation email; share the temporary password privately. Administrator and class officer assignments must still be managed separately.
 
 Permanent deletion requires typed confirmation. Subjects with existing attendance sessions must be deactivated rather than deleted to preserve their history.
 
@@ -99,7 +103,11 @@ It also calls these database functions:
 
 The class data must match `BSIS 2B-G2`, academic year `2026-2027`, and term `1st Semester`. These values are currently specified in the application code.
 
-Configure Supabase Auth's Site URL and allowed redirect URLs for your local or hosted address. The signup flow requests `/protected`, and password recovery requests `/auth/update-password`. The `/auth/confirm` route handles email verification links containing `token_hash` and `type`, with an optional `next` destination. Email template configuration is managed in Supabase.
+In the hosted project's Supabase Auth general configuration, turn **Allow new users to sign up** **off**. This setting is required to prevent public account creation through Supabase's API as well as the application. Keep the **Email** provider enabled so existing and administrator-created accounts can sign in with email and password. See [Supabase's general configuration documentation](https://supabase.com/docs/guides/auth/general-configuration) and [password authentication documentation](https://supabase.com/docs/guides/auth/passwords).
+
+The repository's `supabase/config.toml` sets `auth.enable_signup = false` for a local Supabase CLI instance. It does **not** change a hosted project's settings or provide the missing database schema. Restart an already running local instance after changing its configuration. See [Supabase's CLI configuration reference](https://supabase.com/docs/guides/local-development/cli/config).
+
+Configure Supabase Auth's Site URL and allowed redirect URLs for your local or hosted address. Password recovery requests `/auth/update-password`. The retained `/auth/confirm` route handles email verification links containing `token_hash` and `type`, with an optional `next` destination. Email template configuration is managed in Supabase.
 
 ### 3. Add environment variables
 
@@ -108,9 +116,10 @@ Create `.env.local` in the project root:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 ```
 
-Use the project's public publishable key for the browser client. Keep `.env.local` out of version control; it is already ignored by Git.
+Use the project's public publishable key for the browser client. The service role key is required only by the server's administrator account creation operation; never prefix it with `NEXT_PUBLIC_`, expose it to browser code, or commit it. Add it to your hosting environment when deploying. Keep `.env.local` out of version control; it is already ignored by Git.
 
 ### 4. Start the application
 
@@ -126,6 +135,7 @@ Open [http://localhost:3000](http://localhost:3000), sign in, and visit `/dashbo
 | --- | --- |
 | `npm run dev` | Start the local development server. |
 | `npm run lint` | Check the code with ESLint. |
+| `npm test` | Check account creation authorization and validation without a live Supabase project. |
 | `npm run build` | Create a production build. |
 | `npm start` | Serve the production build after running `npm run build`. |
 
@@ -133,7 +143,8 @@ Open [http://localhost:3000](http://localhost:3000), sign in, and visit `/dashbo
 
 ```text
 app/
-  auth/                  Sign-in, signup, confirmation, and password recovery
+  admin/accounts/        Administrator-only account creation
+  auth/                  Sign-in, account requests, confirmation, and password recovery
   dashboard/             Class overview and latest attendance statistics
   students/              Roster management and individual student reports
   attendance/            Session creation and attendance recording

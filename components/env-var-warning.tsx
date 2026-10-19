@@ -12,7 +12,7 @@ export function EnvVarWarning() {
           Sign in
         </Button>
         <Button size="sm" variant={"default"} disabled>
-          Sign up
+          Need an account?
         </Button>
       </div>
     </div>

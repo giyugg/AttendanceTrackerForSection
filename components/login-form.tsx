@@ -3,6 +3,7 @@
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { ACCOUNT_REQUEST_EMAIL, ACCOUNT_REQUEST_MAILTO } from "@/lib/account-access";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -152,16 +153,19 @@ export function LoginForm({
           {isLoading ? "Signing In..." : "Sign In →"}
         </button>
 
-        {/* SIGN UP NAVIGATION */}
+        {/* ACCOUNT ACCESS */}
         <div className="border-t border-[#DDE5F0] pt-6 text-center">
-          <p className="text-sm text-slate-500">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/auth/sign-up"
-              className="font-bold text-[#2448A5] hover:text-[#172B52] hover:underline"
+          <p className="text-sm leading-7 text-slate-500">
+            Need an account? Email{" "}
+            <a
+              href={ACCOUNT_REQUEST_MAILTO}
+              className="break-all font-bold text-[#2448A5] underline underline-offset-4 hover:text-[#172B52] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2448A5] focus-visible:ring-offset-2"
             >
-              Create an Account
-            </Link>
+              {ACCOUNT_REQUEST_EMAIL}
+            </a>.
+          </p>
+          <p className="mt-2 text-xs leading-6 text-slate-500">
+            Use your educational email. Gmail and other personal email providers are not accepted.
           </p>
         </div>
       </form>

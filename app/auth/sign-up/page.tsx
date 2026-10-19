@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { SignUpForm } from "@/components/sign-up-form";
+import { AccountRequestNotice } from "@/components/sign-up-form";
 
 const benefits = [
-  "Set up your class workspace in minutes",
+  "Request access using your educational email",
   "Keep student records neatly organized",
   "Track every attendance session with ease",
 ];
@@ -21,10 +21,10 @@ export default function Page() {
           </Link>
 
           <div className="my-12">
-            <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold tracking-wide text-blue-100">GET STARTED</span>
+            <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold tracking-wide text-blue-100">ACCOUNT ACCESS</span>
             <h2 className="mt-8 max-w-md text-4xl font-bold leading-tight tracking-tight xl:text-5xl">Your class, organized from day one.</h2>
             <p className="mt-6 max-w-md text-base leading-8 text-blue-100">
-              Create your account and bring student records, attendance sessions, and class reports together in one convenient place.
+              Ask an administrator for account access to bring student records, attendance sessions, and class reports together in one convenient place.
             </p>
             <div className="mt-10 space-y-4">
               {benefits.map((benefit) => (
@@ -52,7 +52,7 @@ export default function Page() {
           </div>
 
           <div className="flex flex-1 items-center justify-center py-10">
-            <div className="w-full max-w-md"><SignUpForm /></div>
+            <div className="w-full max-w-md"><AccountRequestNotice /></div>
           </div>
 
           <p className="text-center text-xs leading-6 text-slate-400">Attendly • Class Attendance Monitoring</p>

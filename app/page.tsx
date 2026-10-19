@@ -30,7 +30,7 @@ export default function Home() {
       <header className="border-b border-[#DDE5F0] bg-white">
         <nav
           aria-label="Landing page navigation"
-          className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-5 sm:px-8"
+          className="mx-auto flex min-h-20 max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-4 sm:flex-nowrap sm:px-8 sm:py-0"
         >
 
           {/* LOGO */}
@@ -73,7 +73,7 @@ export default function Home() {
               href="/auth/sign-up"
               className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#2448A5] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#172B52]"
             >
-              Sign Up
+              Need an account?
             </Link>
           </div>
         </nav>
@@ -125,7 +125,7 @@ export default function Home() {
               href="/auth/sign-up"
               className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-[#DDE5F0] bg-white px-8 py-3 text-sm font-semibold text-[#172B52] transition-colors hover:bg-[#EAF0FF] sm:w-auto"
             >
-              Create an Account
+              Request account access
             </Link>
           </div>
 

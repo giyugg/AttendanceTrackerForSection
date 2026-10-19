@@ -113,7 +113,8 @@ export default function AttendlyShell({ children }: { children: ReactNode }) {
 
   // Only application pages receive shared navigation.
   // Authentication and public pages stay unchanged.
-  const isApplicationPage = navItems.some((item) => matchesRoute(item.href));
+  const isApplicationPage =
+    navItems.some((item) => matchesRoute(item.href)) || matchesRoute("/admin");
 
   // Reports must take priority over the parent
   // /attendance route when highlighting navigation.

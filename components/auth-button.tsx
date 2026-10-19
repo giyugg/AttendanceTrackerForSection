@@ -22,7 +22,7 @@ export async function AuthButton() {
         <Link href="/auth/login">Sign in</Link>
       </Button>
       <Button asChild size="sm" variant={"default"}>
-        <Link href="/auth/sign-up">Sign up</Link>
+        <Link href="/auth/sign-up">Need an account?</Link>
       </Button>
     </div>
   );

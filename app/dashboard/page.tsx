@@ -18,6 +18,12 @@ export default async function DashboardPage() {
     redirect("/auth/login");
   }
 
+  const { data: admin, error: adminError } = await supabase
+    .from("app_admins")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
   // 2. Get the BSIS 2B class
   const { data: classData, error: classError } = await supabase
     .from("classes")
@@ -156,6 +162,14 @@ export default async function DashboardPage() {
           >
             Manage Attendance →
           </Link>
+          {!adminError && admin && (
+            <Link
+              href="/admin/accounts"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-100 sm:w-auto"
+            >
+              Create Account
+            </Link>
+          )}
         </div>
 
         {/* Welcome Banner */}

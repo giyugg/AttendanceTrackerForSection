@@ -73,17 +73,16 @@ export function SignUpUserSteps() {
           </Link>
         </TutorialStep>
       ) : null}
-      <TutorialStep title="Sign up your first user">
+      <TutorialStep title="Request account access">
         <p>
-          Head over to the{" "}
+          Accounts are created by an administrator. Visit the{" "}
           <Link
-            href="auth/sign-up"
+            href="/auth/sign-up"
             className="font-bold hover:underline text-foreground/80"
           >
-            Sign up
+            account access
           </Link>{" "}
-          page and sign up your first user. It&apos;s okay if this is just you
-          for now. Your awesome idea will have plenty of users later!
+          page to request an account using your educational email.
         </p>
       </TutorialStep>
     </ol>

@@ -1,0 +1,4 @@
+project_id = "attendly"
+
+[auth]
+enable_signup = false
