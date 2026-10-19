@@ -1,109 +1,149 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# Attendly
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+**Class attendance monitoring, from the student roster to the final report.**
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+Attendly is a web application for managing students, recording attendance by subject, and reviewing class participation in one workspace. It helps administrators and class officers keep attendance records organized and turn saved records into summaries and downloadable CSV reports.
 
-## Features
+The current application is built for **BSIS 2B-G2, Academic Year 2026–2027, 1st Semester**.
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Proxy
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+## What Attendly does
 
-## Demo
+| Feature | What you can do |
+| --- | --- |
+| Class dashboard | See the active student count and the latest session's Present, Late, Absent, Excused, and Not Marked totals, along with attendance completion progress. |
+| Student management | Maintain student numbers and names, add students, edit active students, activate or deactivate enrollments, and open individual attendance histories. |
+| Subject management | Add subjects with codes and names, activate or deactivate them, and remove unused subjects. |
+| Attendance sessions | Create a session for an active subject with a date and time, then record or update attendance for active students. |
+| Attendance reports | Search recent session summaries by name and date, or filter a student's saved history by attendance status and date range. |
+| CSV exports | Download filtered class session summaries and individual student attendance reports for use in a spreadsheet. |
+| Account access | Sign up, sign in with email and password, recover a forgotten password, and access features according to assigned permissions. |
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+The interface adapts to desktop and mobile screens, with shared navigation for the dashboard, students, attendance, and reports.
 
-## Deploy to Vercel
+### Attendance statuses
 
-Vercel deployment will guide you through creating a Supabase account and project.
+Students can be marked **Present**, **Late**, **Absent**, or **Excused**. Students without a saved attendance record remain **Not Marked**; they are not automatically counted as absent. Changes are stored when you select **Save Attendance**.
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+Class reports cover the **50 most recent sessions**. Individual student reports show saved attendance history, including records retained after an enrollment is deactivated.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+## Typical workflow
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+1. **Prepare the roster and subjects.** An administrator adds students, manages active enrollments, and registers subjects.
+2. **Create a session.** An administrator, class president, or secretary selects the subject, date, and time.
+3. **Record attendance.** Open the session, mark students, and select **Save Attendance**.
+4. **Review participation.** Check the dashboard, browse session summaries, or open a student's attendance history.
+5. **Export a report.** Apply the relevant filters and download the results as CSV.
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+## Roles and permissions
 
-## Clone and run locally
+| Role | Management permissions |
+| --- | --- |
+| Application administrator | Manage students, enrollments, and subjects; create sessions; record attendance; and permanently delete students or sessions. |
+| Class president or secretary | Create attendance sessions and record or update attendance for the assigned class. |
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+Other signed-in users can view records where permitted by the Supabase database policies. Creating an account does not automatically grant administrator or officer access; assignments are maintained in `app_admins` and `class_officers`.
 
-2. Create a Next.js app using the Supabase Starter template npx command
+Permanent deletion requires typed confirmation. Subjects with existing attendance sessions must be deactivated rather than deleted to preserve their history.
 
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
+## Future plans
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
+The long-term goal is to expand Attendly from a single-class workspace into an attendance system for an entire college or university. The following improvements are planned for future development:
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+- **College and university support.** Support multiple departments, programs, year levels, sections, and subjects, with configurable academic years and terms instead of a fixed BSIS 2B-G2 workspace.
+- **Reusable database functions.** Replace G2-specific functions such as `add_g2_student_parts` and `delete_g2_student`, along with hardcoded class lookups, with shared operations that use the relevant class and enrollment identifiers. This would allow the same attendance workflows to serve different sections.
+- **Student view.** Give students a personal attendance overview where they can review their own records across subjects, see Present, Late, Absent, and Excused totals, and track their attendance over time. Access would be limited to their own records.
+- **Teacher view.** Give teachers a workspace for their assigned subjects and sections, with tools to record attendance, review student participation, and access class reports. Teacher and student permissions would extend the current administrator, president, and secretary roles.
 
-3. Use `cd` to change into the app's directory
+## Technology stack
 
-   ```bash
-   cd with-supabase-app
-   ```
+| Layer | Technology |
+| --- | --- |
+| Application | Next.js App Router, React, and TypeScript |
+| Data and authentication | Supabase PostgreSQL, Supabase Auth, and cookie-based sessions through `@supabase/ssr` |
+| Styling | Tailwind CSS |
+| UI components | shadcn/ui and Radix UI |
+| Server operations | Next.js Server Components and Server Actions |
 
-4. Rename `.env.example` to `.env.local` and update the following:
+## Run locally
 
-  ```env
-  NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[INSERT SUPABASE PROJECT API PUBLISHABLE OR ANON KEY]
-  ```
-  > [!NOTE]
-  > This example uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, which refers to Supabase's new **publishable** key format.
-  > Both legacy **anon** keys and new **publishable** keys can be used with this variable name during the transition period. Supabase's dashboard may show `NEXT_PUBLIC_SUPABASE_ANON_KEY`; its value can be used in this example.
-  > See the [full announcement](https://github.com/orgs/supabase/discussions/29260) for more information.
+### Prerequisites
 
-  Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+- Node.js **22 or later** and npm.
+- Git.
+- Access to a Supabase project configured with Attendly's database schema, functions, access policies, and class data.
 
-5. You can now run the Next.js local development server:
+### 1. Clone the repository and install dependencies
 
-   ```bash
-   npm run dev
-   ```
+```bash
+git clone https://github.com/giyugg/AttendanceTrackerForSection.git attendly
+cd attendly
+npm ci
+```
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+### 2. Configure the Supabase backend
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+Use an existing Attendly backend or obtain its database setup from the project maintainer. **This repository currently does not include database migrations, seed scripts, or SQL function definitions.** Environment variables alone do not provision the backend.
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+The application expects these tables:
 
-## Feedback and issues
+- `classes`, `students`, and `class_enrollments` for the class roster.
+- `subjects`, `attendance_sessions`, and `attendance_records` for attendance tracking.
+- `app_admins` and `class_officers` for permission assignments.
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+It also calls these database functions:
 
-## More Supabase examples
+- `add_g2_student_parts`
+- `delete_g2_student`
+- `delete_g2_subject`
+- `delete_g2_attendance_session`
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+The class data must match `BSIS 2B-G2`, academic year `2026-2027`, and term `1st Semester`. These values are currently specified in the application code.
+
+Configure Supabase Auth's Site URL and allowed redirect URLs for your local or hosted address. The signup flow requests `/protected`, and password recovery requests `/auth/update-password`. The `/auth/confirm` route handles email verification links containing `token_hash` and `type`, with an optional `next` destination. Email template configuration is managed in Supabase.
+
+### 3. Add environment variables
+
+Create `.env.local` in the project root:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
+```
+
+Use the project's public publishable key for the browser client. Keep `.env.local` out of version control; it is already ignored by Git.
+
+### 4. Start the application
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000), sign in, and visit `/dashboard`. Management features become available according to the account's database role assignments.
+
+## Available commands
+
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the local development server. |
+| `npm run lint` | Check the code with ESLint. |
+| `npm run build` | Create a production build. |
+| `npm start` | Serve the production build after running `npm run build`. |
+
+## Project structure
+
+```text
+app/
+  auth/                  Sign-in, signup, confirmation, and password recovery
+  dashboard/             Class overview and latest attendance statistics
+  students/              Roster management and individual student reports
+  attendance/            Session creation and attendance recording
+    history/             Class reports and CSV exports
+    subjects/            Subject management
+components/              Shared navigation, authentication forms, and UI components
+lib/supabase/            Browser, server, and session-refresh Supabase clients
+proxy.ts                 Request handling for authentication and session refresh
+```
+
+## Credits
+
+Designed and developed by **Kyle A. Acuña** for BSIS 2B-G2.
