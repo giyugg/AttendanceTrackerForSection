@@ -51,3 +51,4 @@ next-env.d.ts
 !/tests/account-creation.test.cjs
 !/tests/role-permissions.test.cjs
 !/tests/server-requests.test.cjs
+!/tests/account-names.test.cjs

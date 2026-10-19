@@ -102,9 +102,11 @@ function Brand({ home }: { home: string }) {
 export default function AttendlyShell({
   children,
   role,
+  displayName,
 }: {
   children: ReactNode;
   role: AppRole;
+  displayName: string;
 }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -173,9 +175,14 @@ export default function AttendlyShell({
 
         {/* SIDEBAR FOOTER */}
         <div className="mt-auto space-y-3">
-          <p className="px-4 text-xs font-semibold text-[#2448A5]">
-            {ROLE_LABELS[role]}
-          </p>
+          <div className="min-w-0 space-y-1 px-4">
+            <p className="max-w-full break-words text-sm font-bold text-[#172B52]">
+              {displayName}
+            </p>
+            <p className="text-xs font-semibold text-[#2448A5]">
+              {ROLE_LABELS[role]}
+            </p>
+          </div>
           <div className="rounded-xl bg-[#F6F8FC] p-4">
             <p className="text-sm font-bold text-[#172B52]">BSIS 2B-G2</p>
 
@@ -231,9 +238,14 @@ export default function AttendlyShell({
             }`}
           >
             <div className="space-y-1">{navigationLinks()}</div>
-            <p className="mt-4 px-4 text-xs font-semibold text-[#2448A5]">
-              {ROLE_LABELS[role]}
-            </p>
+            <div className="mt-4 min-w-0 space-y-1 px-4">
+              <p className="max-w-full break-words text-sm font-bold text-[#172B52]">
+                {displayName}
+              </p>
+              <p className="text-xs font-semibold text-[#2448A5]">
+                {ROLE_LABELS[role]}
+              </p>
+            </div>
 
             <p className="mt-4 border-t border-[#DDE5F0] pt-4 text-xs text-slate-500">
               BSIS 2B-G2 • AY 2026–2027

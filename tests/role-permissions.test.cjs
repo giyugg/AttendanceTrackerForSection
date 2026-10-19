@@ -29,6 +29,7 @@ function loadTypeScript(relativePath, imports = {}) {
 }
 
 const roles = loadTypeScript("lib/roles.ts");
+const accountProfile = loadTypeScript("lib/account-profile.ts");
 const actorId = "a1111111-1111-4111-8111-111111111111";
 const targetId = "22222222-2222-4222-8222-222222222222";
 const classId = "33333333-3333-4333-8333-333333333333";
@@ -53,6 +54,7 @@ function sessionHarness(options = {}) {
       { id: otherClassId, code: "Other class", academic_year: "2026-2027", term: "1st Semester" },
     ],
     class_officers: options.officers ?? [],
+    profiles: options.profiles ?? [],
   };
   const supabase = {
     auth: {
@@ -65,9 +67,10 @@ function sessionHarness(options = {}) {
     from(table) {
       assert.ok(Object.hasOwn(rows, table), `Unexpected table: ${table}`);
       const filters = [];
-      calls.push({ type: "query", table, filters });
+      const call = { type: "query", table, filters };
+      calls.push(call);
       return {
-        select() { return this; },
+        select(columns) { call.columns = columns; return this; },
         eq(column, value) { filters.push([column, value]); return this; },
         async maybeSingle() {
           if (options.beforeQuery) await options.beforeQuery(table);
@@ -75,7 +78,8 @@ function sessionHarness(options = {}) {
           const matches = rows[table].filter((row) => filters.every(([column, value]) => row[column] === value));
           return {
             data: matches.length === 1 ? matches[0] : null,
-            error: options.queryError === table ? { message: privateError } : null,
+            error: options.queryError === table ? { message: privateError }
+              : table === "profiles" && options.profileColumnMissing && call.columns !== "full_name" ? { code: options.profileColumnMissing, message: privateError } : null,
           };
         },
       };
@@ -92,6 +96,7 @@ function sessionHarness(options = {}) {
     // cases exercise real authorization; the renderer test below covers cache.
     "react": require("react"),
     "@/lib/roles": roles,
+    "@/lib/account-profile": accountProfile,
     "next/server": {
       async connection() { calls.push({ type: "connection" }); },
     },
@@ -226,7 +231,7 @@ test("temporary Auth outages fail closed without redirecting a valid session to 
   }
 });
 
-test("administrator membership and workspace queries start together", async () => {
+test("administrator membership, workspace, and profile queries start together", async () => {
   const started = [];
   let release;
   const pendingQuery = new Promise((resolve) => { release = resolve; });
@@ -241,7 +246,7 @@ test("administrator membership and workspace queries start together", async () =
   const pendingAccess = getUserAccess();
   try {
     await new Promise(setImmediate);
-    assert.deepEqual(started.sort(), ["app_admins", "classes"]);
+    assert.deepEqual(started.sort(), ["app_admins", "classes", "profiles"]);
   } finally {
     release();
     await pendingAccess;
@@ -262,14 +267,15 @@ test("real RSC renders share authorization work but verify permissions again on 
     const { renderToReadableStream } = require('next/dist/compiled/react-server-dom-webpack/server.node');
     const loadTypeScript = ${loadTypeScript.toString()};
     const roles = loadTypeScript('lib/roles.ts');
+    const accountProfile = loadTypeScript('lib/account-profile.ts');
     const actorId = ${JSON.stringify(actorId)};
     const targetId = ${JSON.stringify(targetId)};
     const classId = ${JSON.stringify(classId)};
     const otherClassId = ${JSON.stringify(otherClassId)};
     const privateError = ${JSON.stringify(privateError)};
     const sessionHarness = ${sessionHarness.toString()};
-    const adminSession = sessionHarness({ admin: true });
-    const studentSession = sessionHarness();
+    const adminSession = sessionHarness({ admin: true, profiles: [{ id: actorId, first_name: 'Admin', last_name: 'Name', full_name: 'Old Name' }] });
+    const studentSession = sessionHarness({ profiles: [{ id: actorId, first_name: 'Student', last_name: 'Name', full_name: 'Old Name' }] });
     let current = adminSession;
     let clientCalls = 0;
     const access = loadTypeScript('lib/access.ts', {
@@ -278,7 +284,7 @@ test("real RSC renders share authorization work but verify permissions again on 
     });
     async function Authorization() {
       const result = await access.getUserAccess();
-      return React.createElement('span', null, result.role);
+      return React.createElement('span', null, result.role + ':' + result.displayName);
     }
     async function Guard() {
       const result = await access.requireRole(['admin', 'president', 'secretary', 'student']);
@@ -296,15 +302,17 @@ test("real RSC renders share authorization work but verify permissions again on 
       return output;
     }
     (async () => {
-      assert.match(await render(), /admin/);
+      assert.match(await render(), /admin:Admin Name/);
       assert.equal(clientCalls, 1);
       assert.equal(adminSession.calls.filter(({ type }) => type === 'getUser').length, 1);
       assert.equal(adminSession.calls.filter(({ table }) => table === 'app_admins').length, 1);
+      assert.equal(adminSession.calls.filter(({ table }) => table === 'profiles').length, 1);
       current = studentSession;
-      assert.match(await render(), /student/);
+      assert.match(await render(), /student:Student Name/);
       assert.equal(clientCalls, 2);
       assert.equal(studentSession.calls.filter(({ type }) => type === 'getUser').length, 1);
       assert.equal(studentSession.calls.filter(({ table }) => table === 'app_admins').length, 1);
+      assert.equal(studentSession.calls.filter(({ table }) => table === 'profiles').length, 1);
     })().catch((error) => { console.error(error); process.exitCode = 1; });
   `;
   const result = spawnSync(process.execPath, ["--conditions=react-server", "-e", script], {
@@ -314,6 +322,65 @@ test("real RSC renders share authorization work but verify permissions again on 
   });
   assert.equal(result.error, undefined);
   assert.equal(result.status, 0, result.stderr || result.stdout);
+});
+
+test("display names come from the current user's profile without granting any role", async () => {
+  const harness = sessionHarness({
+    user: { id: actorId, email: "student@school.edu", user_metadata: { role: "admin", full_name: "Metadata Name" } },
+    profiles: [
+      { id: actorId, first_name: "  李  ", middle_initial: "m.", last_name: " María ", full_name: "Old Name", role: "admin" },
+      { id: targetId, full_name: "Another User" },
+    ],
+  });
+  const { getUserAccess } = loadTypeScript("lib/access.ts", harness.imports);
+  const access = await getUserAccess();
+  assert.equal(access.displayName, "李 M. María");
+  assert.equal(access.role, "student");
+  assert.deepEqual(harness.calls.find(({ table }) => table === "profiles").filters, [["id", actorId]]);
+});
+
+test("older profile schemas fall back to legacy name columns until the name migration is applied", async (t) => {
+  for (const profileColumnMissing of ["42703", "PGRST204"]) {
+    await t.test(profileColumnMissing, async () => {
+      const harness = sessionHarness({
+        admin: true,
+        user: { id: actorId, email: "admin@school.edu" },
+        profileColumnMissing,
+        profiles: [{ id: actorId, full_name: "  Legacy   Name " }],
+      });
+      const { getUserAccess } = loadTypeScript("lib/access.ts", harness.imports);
+      const access = await getUserAccess();
+      assert.equal(access.role, "admin");
+      assert.equal(access.displayName, "Legacy Name");
+      const queries = harness.calls.filter(({ table }) => table === "profiles");
+      assert.equal(queries.length, 2);
+      assert.match(queries[0].columns, /first_name/);
+      assert.equal(queries[1].columns, "full_name");
+      assert.deepEqual(queries.map(({ filters }) => filters), [[["id", actorId]], [["id", actorId]]]);
+    });
+  }
+});
+
+test("missing, invalid, and unavailable profile names use the email without changing permissions", async (t) => {
+  for (const [name, options] of [
+    ["missing profile", {}],
+    ["blank name", { profiles: [{ id: actorId, full_name: "   " }] }],
+    ["control characters", { profiles: [{ id: actorId, full_name: "Name\nInjected" }] }],
+    ["profile belongs to another user", { profiles: [{ id: targetId, full_name: "Other Name" }] }],
+    ["profile query error", { queryError: "profiles", profiles: [{ id: actorId, full_name: "Ignored Name" }] }],
+    ["profile query exception", { throwAt: "profiles" }],
+  ]) {
+    await t.test(name, async () => {
+      const harness = sessionHarness({
+        user: { id: actorId, email: "student@school.edu", user_metadata: { full_name: "Ignored Metadata", role: "admin" } },
+        ...options,
+      });
+      const { getUserAccess } = loadTypeScript("lib/access.ts", harness.imports);
+      const access = await getUserAccess();
+      assert.equal(access.displayName, "student@school.edu");
+      assert.equal(access.role, "student");
+    });
+  }
 });
 
 test("failed membership or class queries fail closed instead of granting fallback access", async (t) => {

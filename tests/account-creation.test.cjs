@@ -32,11 +32,16 @@ function loadTypeScript(relativePath, imports = {}, globals = {}) {
 }
 
 const validation = loadTypeScript("lib/account-validation.ts");
+const accountProfile = loadTypeScript("lib/account-profile.ts");
 const temporaryPassword = "Private-temp-password-42!";
+const fullName = "María C. Dela Cruz";
 
 function accountForm(fields = {}) {
   const form = new FormData();
   const values = {
+    first_name: "María",
+    middle_initial: "C",
+    last_name: "Dela Cruz",
     email: "student@ms.bulsu.edu.ph",
     password: temporaryPassword,
     verified_request: "on",
@@ -53,6 +58,7 @@ function actionHarness(options = {}) {
   const user = Object.hasOwn(options, "user") ? options.user : { id: "admin-id" };
   const action = loadTypeScript("app/admin/accounts/actions.ts", {
     "@/lib/account-validation": validation,
+    "@/lib/account-profile": accountProfile,
     "next/cache": {
       revalidatePath(route) {
         calls.push({ type: "revalidate", route });
@@ -103,7 +109,7 @@ function actionHarness(options = {}) {
           auth: {
             admin: {
               async createUser(input) {
-                calls.push({ type: "createUser", input: { ...input } });
+                calls.push({ type: "createUser", input: JSON.parse(JSON.stringify(input)) });
                 if (options.throwAt === "createUser") throw new Error(temporaryPassword);
                 return {
                   data: { user: options.missingCreatedUser ? null : { id: "new-user-id" } },
@@ -111,6 +117,16 @@ function actionHarness(options = {}) {
                 };
               },
             },
+          },
+          from(table) {
+            assert.equal(table, "profiles");
+            return {
+              async upsert(input, config) {
+                calls.push({ type: "saveProfile", table, input: JSON.parse(JSON.stringify(input)), config: JSON.parse(JSON.stringify(config)) });
+                if (options.throwAt === "saveProfile") throw new Error(temporaryPassword);
+                return { data: null, error: options.profileError ?? null };
+              },
+            };
           },
         };
       },
@@ -137,6 +153,7 @@ function actionHarness(options = {}) {
 function assertNoPrivilegedClient(harness) {
   assert.equal(harness.calls.some(({ type }) => type === "adminFactory"), false);
   assert.equal(harness.calls.some(({ type }) => type === "createUser"), false);
+  assert.equal(harness.calls.some(({ type }) => type === "saveProfile"), false);
 }
 
 test("only authenticated administrators reach the privileged client", async (t) => {
@@ -206,23 +223,83 @@ test("password and verified request checks run before privileged operations", as
   }
 });
 
+test("account creation validates separate name fields before constructing the privileged client", async (t) => {
+  for (const fields of [
+    { first_name: undefined }, { last_name: undefined },
+    { first_name: "" }, { last_name: "   " },
+    { first_name: "x".repeat(81) }, { last_name: "x".repeat(81) },
+    { first_name: "Name\nInjected" }, { last_name: "Name\u0000Injected" },
+    { first_name: new Blob([fullName]) }, { middle_initial: new Blob(["C"]) },
+    { middle_initial: "CC" }, { middle_initial: "7" }, { middle_initial: "Ç" },
+    { first_name: "a".repeat(80), last_name: "b".repeat(80) },
+    { first_name: undefined, last_name: undefined, full_name: "Injected single name" },
+  ]) {
+    await t.test(JSON.stringify(fields), async () => {
+      const harness = actionHarness();
+      const result = await harness.run(fields);
+      assert.equal(result.success, false);
+      assert.match(result.message, /name/i);
+      assertNoPrivilegedClient(harness);
+      assert.equal(harness.calls.some(({ type }) => type === "saveProfile"), false);
+    });
+  }
+});
+
+test("account creation allows an absent middle initial and derives the compatibility name", async (t) => {
+  for (const middle_initial of [undefined, "", " "]) {
+    await t.test(JSON.stringify({ middle_initial }), async () => {
+      const harness = actionHarness();
+      const result = await harness.run({ middle_initial, full_name: "Ignored single field" });
+      assert.equal(result.success, true);
+      const metadata = harness.calls.find(({ type }) => type === "createUser").input.user_metadata;
+      assert.deepEqual(metadata, { first_name: "María", middle_initial: "", last_name: "Dela Cruz", full_name: "María Dela Cruz" });
+      assert.deepEqual(harness.calls.find(({ type }) => type === "saveProfile").input, {
+        id: "new-user-id", ...metadata,
+      });
+    });
+  }
+});
+
 test("creation uses the verified normalized email and grants no application roles", async (t) => {
   for (const password of [temporaryPassword, "a".repeat(8), "a".repeat(72), "é".repeat(36)]) {
     await t.test(`${Buffer.byteLength(password)} byte password`, async () => {
       const harness = actionHarness();
-      const result = await harness.run({ email: "  Student@MS.BulSU.EDU.PH  ", password });
+      const result = await harness.run({ email: "  Student@MS.BulSU.EDU.PH  ", password, first_name: "  María  ", middle_initial: " c. ", last_name: "  Dela   Cruz  ", full_name: "Ignored injected name", role: "admin" });
       assert.equal(result.success, true);
       assert.match(result.message, /student@ms\.bulsu\.edu\.ph/);
       assert.equal(result.message.includes(password), false);
       assert.deepEqual(harness.calls.map(({ type }) => type), [
-        "session", "getUser", "membership", "adminFactory", "createUser", "revalidate",
+        "session", "getUser", "membership", "adminFactory", "createUser", "saveProfile", "revalidate",
       ]);
       assert.deepEqual(harness.calls.find(({ type }) => type === "createUser").input, {
         email: "student@ms.bulsu.edu.ph",
         password,
         email_confirm: true,
+        user_metadata: { first_name: "María", middle_initial: "C", last_name: "Dela Cruz", full_name: fullName },
+      });
+      assert.deepEqual(harness.calls.find(({ type }) => type === "saveProfile"), {
+        type: "saveProfile", table: "profiles", input: { id: "new-user-id", first_name: "María", middle_initial: "C", last_name: "Dela Cruz", full_name: fullName }, config: { onConflict: "id" },
       });
       assert.deepEqual(harness.calls.at(-1), { type: "revalidate", route: "/admin/users" });
+    });
+  }
+});
+
+test("failed profile saves preserve a confirmed created account and never create it twice", async (t) => {
+  for (const options of [
+    { profileError: { message: temporaryPassword } },
+    { throwAt: "saveProfile" },
+  ]) {
+    await t.test(JSON.stringify(options), async () => {
+      const harness = actionHarness(options);
+      const result = await harness.run();
+      assert.equal(result.success, true);
+      assert.match(result.message, /account created/i);
+      assert.match(result.message, /name/i);
+      assert.match(result.message, /save|update|edit/i);
+      assert.equal(harness.calls.filter(({ type }) => type === "createUser").length, 1);
+      assert.equal(harness.calls.filter(({ type }) => type === "saveProfile").length, 1);
+      assert.equal(harness.calls.filter(({ type }) => type === "revalidate").length, 1);
     });
   }
 });

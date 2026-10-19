@@ -12,6 +12,26 @@ function AccountFields() {
 
   return (
     <fieldset disabled={pending} className="space-y-6 disabled:opacity-60">
+      <fieldset className="space-y-4">
+        <legend className="mb-3 text-sm font-semibold text-[#172B52]">Account holder&apos;s name</legend>
+        <div className="grid gap-4 sm:grid-cols-[1fr_8rem_1fr]">
+          <div>
+            <label htmlFor="account-first-name" className="text-sm font-semibold text-[#172B52]">First name</label>
+            <input id="account-first-name" name="first_name" type="text" required maxLength={80} autoComplete="given-name" placeholder="First name" className={inputClassName} />
+          </div>
+          <div>
+            <label htmlFor="account-middle-initial" className="text-sm font-semibold text-[#172B52]">Middle initial</label>
+            <input id="account-middle-initial" name="middle_initial" type="text" maxLength={2} pattern="[A-Za-z][.]?" autoComplete="off" autoCapitalize="characters" placeholder="M." aria-describedby="account-initial-help" className={inputClassName} />
+            <p id="account-initial-help" className="mt-2 text-xs text-slate-500">Optional</p>
+          </div>
+          <div>
+            <label htmlFor="account-last-name" className="text-sm font-semibold text-[#172B52]">Last name</label>
+            <input id="account-last-name" name="last_name" type="text" required maxLength={80} autoComplete="family-name" placeholder="Last name" className={inputClassName} />
+          </div>
+        </div>
+        <p className="text-sm leading-6 text-slate-500">The name appears in the account list and above the account holder&apos;s role in the sidebar.</p>
+      </fieldset>
+
       <div>
         <label htmlFor="account-email" className="text-sm font-semibold text-[#172B52]">
           Educational email

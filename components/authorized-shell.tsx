@@ -13,10 +13,10 @@ function WorkspaceLoading() {
 }
 
 async function ResolvedShell({ children }: { children: ReactNode }) {
-  const { role } = await requireRole(["admin", "president", "secretary", "student"]);
+  const { role, displayName } = await requireRole(["admin", "president", "secretary", "student"]);
 
   return (
-    <AttendlyShell role={role}>
+    <AttendlyShell role={role} displayName={displayName}>
       <Suspense fallback={<WorkspaceLoading />}>{children}</Suspense>
     </AttendlyShell>
   );

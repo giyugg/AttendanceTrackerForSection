@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/access";
+import { accountDisplayName, type AccountProfileName } from "@/lib/account-profile";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ROLE_LABELS, ROLE_DESCRIPTIONS, type AppRole } from "@/lib/roles";
 import RoleSelectForm from "./role-select-form";
+import NameEditForm from "./name-edit-form";
 
 const roles: AppRole[] = ["admin", "president", "secretary", "student"];
 const pageSize = 20;
@@ -19,13 +21,18 @@ async function UserDirectory({ page, viewerId, classId }: { page: number; viewer
   }
 
   const userIds = data.users.map((account) => account.id);
-  const [admins, officers, profiles] = userIds.length > 0
+  const [admins, officers, profileResult] = userIds.length > 0
     ? await Promise.all([
         adminClient.from("app_admins").select("user_id").in("user_id", userIds),
         adminClient.from("class_officers").select("user_id,role").eq("class_id", classId).in("user_id", userIds),
-        adminClient.from("profiles").select("id,full_name").in("id", userIds),
+        adminClient.from("profiles").select("id,first_name,middle_initial,last_name,full_name").in("id", userIds),
       ])
     : [{ data: [], error: null }, { data: [], error: null }, { data: [], error: null }];
+
+  const needsNameMigration = profileResult.error?.code === "42703" || profileResult.error?.code === "PGRST204";
+  const profiles = needsNameMigration
+    ? await adminClient.from("profiles").select("id,full_name").in("id", userIds)
+    : profileResult;
 
   if (admins.error || officers.error || profiles.error) {
     return <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm leading-7 text-red-700">Unable to verify account roles. No role controls are available until permissions can be loaded.</p>;
@@ -33,7 +40,7 @@ async function UserDirectory({ page, viewerId, classId }: { page: number; viewer
 
   const adminIds = new Set((admins.data ?? []).map((row) => row.user_id));
   const officerRoles = new Map((officers.data ?? []).map((row) => [row.user_id, row.role]));
-  const profileNames = new Map((profiles.data ?? []).map((row) => [row.id, row.full_name]));
+  const profileNames = new Map<string, AccountProfileName>((profiles.data ?? []).map((row) => [row.id, row]));
   const hasNextPage = data.total > 0 ? page * pageSize < data.total : data.users.length === pageSize;
 
   return (
@@ -42,6 +49,7 @@ async function UserDirectory({ page, viewerId, classId }: { page: number; viewer
         <h2 id="account-list-heading" className="text-xl font-bold text-[#172B52]">User accounts</h2>
         <p className="mt-2 text-sm leading-6 text-slate-500">Officer roles apply to BSIS 2B-G2. Administrator access applies across the application.</p>
       </div>
+      {needsNameMigration && <p role="alert" className="border-b border-[#DDE5F0] bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900 sm:px-6">Name editing needs the profile name fields database update. Ask the site maintainer to apply it in Supabase. You can still manage account roles.</p>}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[650px] text-left text-sm">
           <thead className="border-b border-[#DDE5F0] bg-[#FAFBFE] text-[#172B52]">
@@ -52,13 +60,20 @@ async function UserDirectory({ page, viewerId, classId }: { page: number; viewer
               const officerRole = officerRoles.get(account.id);
               const role: AppRole = adminIds.has(account.id) ? "admin" : officerRole === "president" || officerRole === "secretary" ? officerRole : "student";
               const email = account.email ?? "No email address";
-              const name = profileNames.get(account.id);
+              const profile = profileNames.get(account.id);
+              const displayName = accountDisplayName(profile, email);
+              const nameParts = {
+                firstName: typeof profile?.first_name === "string" ? profile.first_name : "",
+                middleInitial: typeof profile?.middle_initial === "string" ? profile.middle_initial : "",
+                lastName: typeof profile?.last_name === "string" ? profile.last_name : "",
+              };
               return (
                 <tr key={account.id}>
                   <td className="px-5 py-5 align-top sm:px-6">
-                    <p className="font-semibold text-[#172B52]">{name || email}</p>
-                    {name && <p className="mt-1 break-all text-xs text-slate-500">{email}</p>}
+                    <p className="break-words font-semibold text-[#172B52]">{displayName}</p>
+                    {displayName !== email && <p className="mt-1 break-all text-xs text-slate-500">{email}</p>}
                     {account.id === viewerId && <p className="mt-2 text-xs font-semibold text-[#2448A5]">You</p>}
+                    <NameEditForm userId={account.id} nameParts={nameParts} accountLabel={email} disabled={needsNameMigration} />
                   </td>
                   <td className="px-5 py-5 align-top"><span className="inline-flex whitespace-nowrap rounded-full bg-[#EAF0FF] px-3 py-1.5 text-xs font-bold text-[#2448A5]">{ROLE_LABELS[role]}</span></td>
                   <td className="px-5 py-5 align-top sm:px-6"><RoleSelectForm key={`${account.id}-${role}`} userId={account.id} currentRole={role} isSelf={account.id === viewerId} accountLabel={email} /></td>

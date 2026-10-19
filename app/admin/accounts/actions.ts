@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { isEducationalEmail } from "@/lib/account-validation";
+import { normalizeNameParts, formatAccountName } from "@/lib/account-profile";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -37,6 +38,21 @@ export async function createAccount(
       return fail("Administrator access is required to create accounts.");
     }
 
+    const nameParts = normalizeNameParts({
+      firstName: formData.get("first_name"),
+      middleInitial: formData.get("middle_initial"),
+      lastName: formData.get("last_name"),
+    });
+    if (!nameParts) {
+      return fail("Enter valid first and last names and an optional single-letter middle initial. The combined name must be 120 characters or fewer.");
+    }
+    const profileName = {
+      first_name: nameParts.firstName,
+      middle_initial: nameParts.middleInitial,
+      last_name: nameParts.lastName,
+      full_name: formatAccountName(nameParts),
+    };
+
     const emailField = formData.get("email");
     const password = formData.get("password");
     const email = typeof emailField === "string" ? emailField.trim().toLowerCase() : "";
@@ -66,6 +82,7 @@ export async function createAccount(
     const { data, error } = await adminClient.auth.admin.createUser({
       email,
       password,
+      user_metadata: profileName,
       // The administrator has verified the request before provisioning access.
       email_confirm: true,
     });
@@ -86,11 +103,23 @@ export async function createAccount(
       return fail("Account creation could not be confirmed. Check whether the account exists before trying again.");
     }
 
+    // Auth may already have created a profile via a database trigger. Upsert the
+    // explicit name so both older and newer trigger configurations are supported.
+    let nameSaved = false;
+    try {
+      const { error: profileError } = await adminClient
+        .from("profiles")
+        .upsert({ id: data.user.id, ...profileName }, { onConflict: "id" });
+      nameSaved = !profileError;
+    } catch {
+      // The Auth account exists even if saving its display name failed.
+    }
+
     revalidatePath("/admin/users");
 
     return {
       success: true,
-      message: `Student account created for ${email}. You can change the role in Accounts & Permissions. Share the temporary password privately. The account holder can use Forgot Password on the sign-in page to choose their own password.`,
+      message: `Student account created for ${email}. ${nameSaved ? "You can change the name and role in Accounts & Permissions." : "The name could not be saved. Use Edit name in Accounts & Permissions to save it; the account is already created."} Share the temporary password privately. The account holder can use Forgot Password on the sign-in page to choose their own password.`,
     };
   } catch {
     return fail("Account creation could not be confirmed. Check whether the account exists before trying again.");
