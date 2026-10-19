@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { connection } from "next/server";
-import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
+import { requireRole } from "@/lib/access";
 import AttendanceForm from "./attendance-form";
 
 type PageProps = {
@@ -9,19 +8,9 @@ type PageProps = {
 };
 
 export default async function MarkAttendancePage({ params }: PageProps) {
-  await connection; // Ensure the database connection is established
   const { id } = await params;
-  const supabase = await createClient();
-
-  // 1. Authenticate user.
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    redirect("/auth/login");
-  }
+  const { supabase } = await requireRole(["admin", "president", "secretary"]);
+  const canMark = true;
 
   // 2. Find BSIS 2B-G2.
   const { data: classData, error: classError } = await supabase
@@ -55,29 +44,6 @@ export default async function MarkAttendancePage({ params }: PageProps) {
   if (!session) {
     notFound();
   }
-
-  // 4. Check user permissions.
-  const { data: admin, error: adminError } = await supabase
-    .from("app_admins")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  const { data: officer, error: officerError } = await supabase
-    .from("class_officers")
-    .select("role")
-    .eq("class_id", classData.id)
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (adminError || officerError) {
-    throw new Error("Unable to verify permissions.");
-  }
-
-  const canMark =
-    Boolean(admin) ||
-    officer?.role === "president" ||
-    officer?.role === "secretary";
 
   // 5. Retrieve active class enrollments.
   const { data: enrollments, error: enrollmentError } = await supabase

@@ -1,40 +1,12 @@
 import Link from "next/link";
-import { connection } from "next/server";
-import { notFound, redirect } from "next/navigation";
-
-import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
+import { requireRole } from "@/lib/access";
 import SubjectForm from "./subject-form";
 import { setSubjectActive } from "./actions";
 import DeleteSubjectButton from "./delete-subject-button";
 
 export default async function SubjectsPage() {
-  await connection();
-
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    redirect("/auth/login");
-  }
-
-  // Administrator access only.
-  const { data: admin, error: adminError } = await supabase
-    .from("app_admins")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (adminError) {
-    throw new Error("Unable to verify administrator access.");
-  }
-
-  if (!admin) {
-    notFound();
-  }
+  const { supabase } = await requireRole(["admin"]);
 
   // Find the current class.
   const { data: classData, error: classError } = await supabase

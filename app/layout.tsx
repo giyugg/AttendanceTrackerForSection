@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Geist, Lora, Quicksand } from "next/font/google";
 import { ThemeProvider } from "next-themes";
-import AttendlyShell from "@/components/attendly-shell";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -62,7 +61,7 @@ export default function RootLayout({
               </main>
             }
           >
-            <AttendlyShell>{children}</AttendlyShell>
+            {children}
           </Suspense>
         </ThemeProvider>
       </body>

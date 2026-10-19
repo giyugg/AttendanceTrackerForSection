@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireRole } from "@/lib/access";
+import { roleHome } from "@/lib/roles";
 import EnrollmentToggle from "./enrollment-toggle";
 import DeleteStudentButton from "./delete-student-button";
 
@@ -12,26 +12,8 @@ type Student = {
 };
 
 export default async function StudentsPage() {
-  const supabase = await createClient();
-
-  // 1. Verify authentication.
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    redirect("/auth/login");
-  }
-
-  // 2. Check administrator permissions.
-  const { data: adminRecord } = await supabase
-    .from("app_admins")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  const canManageStudents = Boolean(adminRecord);
+  const { supabase, role } = await requireRole(["admin", "president", "secretary"]);
+  const canManageStudents = role === "admin";
 
   // 3. Find BSIS 2B-G2.
   const { data: classData, error: classError } = await supabase
@@ -102,7 +84,7 @@ export default async function StudentsPage() {
         {/* PAGE HEADER */}
         <header>
           <Link
-            href="/dashboard"
+            href={roleHome(role)}
             className="inline-flex items-center text-sm font-medium text-[#2448A5] transition hover:text-[#172B52]"
           >
             ← Back to Dashboard

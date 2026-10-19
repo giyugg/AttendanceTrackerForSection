@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
+import { requireRole } from "@/lib/access";
 import StudentReport, { type AttendanceEntry } from "./student-report";
 
 type PageProps = {
@@ -9,7 +9,7 @@ type PageProps = {
 
 export default async function StudentAttendancePage({ params }: PageProps) {
   const { id } = await params;
-  const supabase = await createClient();
+  const { supabase } = await requireRole(["admin", "president", "secretary"]);
 
   // Validate the student UUID.
   const uuidPattern =
@@ -17,16 +17,6 @@ export default async function StudentAttendancePage({ params }: PageProps) {
 
   if (!uuidPattern.test(id)) {
     notFound();
-  }
-
-  // 1. Verify authentication.
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    redirect("/auth/login");
   }
 
   // 2. Find BSIS 2B-G2.
@@ -196,7 +186,7 @@ export default async function StudentAttendancePage({ params }: PageProps) {
           </p>
 
           <h2 className="mt-3 text-2xl font-bold sm:text-3xl">
-            Every student's attendance, organized.
+            Every student&apos;s attendance, organized.
           </h2>
 
           <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-100">

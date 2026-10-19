@@ -1,41 +1,8 @@
 import Link from "next/link";
-import { connection } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { requireRole } from "@/lib/access";
 
 export default async function DashboardPage() {
-  await connection (); // Ensure the database connection is established
-  // Connect to Supabase using the logged-in user's session
-  const supabase = await createClient();
-
-  // 1. Verify authentication
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    redirect("/auth/login");
-  }
-
-  const { data: admin, error: adminError } = await supabase
-    .from("app_admins")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  // 2. Get the BSIS 2B class
-  const { data: classData, error: classError } = await supabase
-    .from("classes")
-    .select("id, code, academic_year, term")
-    .eq("code", "BSIS 2B-G2")
-    .eq("academic_year", "2026-2027")
-    .eq("term", "1st Semester")
-    .maybeSingle();
-
-  if (classError) {
-    return <p>Class error: {classError.message}</p>;
-  }
+  const { supabase, classData } = await requireRole(["admin"]);
 
   if (!classData) {
     return (
@@ -46,33 +13,36 @@ export default async function DashboardPage() {
     );
   }
 
-  // 3. Retrieve active enrolled students
-  const { data: activeEnrollments, error: studentError } = await supabase
-    .from("class_enrollments")
-    .select("student_id")
-    .eq("class_id", classData.id)
-    .eq("is_active", true);
+  // These reads are independent; don't wait for the roster before loading a session.
+  const [enrollmentsResult, sessionResult] = await Promise.all([
+    supabase
+      .from("class_enrollments")
+      .select("student_id")
+      .eq("class_id", classData.id)
+      .eq("is_active", true),
+    supabase
+      .from("attendance_sessions")
+      .select("id, label, session_date")
+      .eq("class_id", classData.id)
+      .order("session_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const { data: activeEnrollments, error: studentError } = enrollmentsResult;
+  const { data: latestSession, error: sessionError } = sessionResult;
 
   if (studentError) {
-    return <p>Student error: {studentError.message}</p>;
+    throw new Error("Unable to load the class roster. Please try again.");
   }
 
   const activeStudentIds = (activeEnrollments ?? []).map(
     (enrollment) => enrollment.student_id,
   );
 
-  // 4. Get the latest attendance session
-  const { data: latestSession, error: sessionError } = await supabase
-    .from("attendance_sessions")
-    .select("id, label, session_date")
-    .eq("class_id", classData.id)
-    .order("session_date", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
   if (sessionError) {
-    return <p>Session error: {sessionError.message}</p>;
+    throw new Error("Unable to load the latest attendance session. Please try again.");
   }
 
   // 5. Retrieve attendance for currently active students
@@ -86,7 +56,7 @@ export default async function DashboardPage() {
       .in("student_id", activeStudentIds);
 
     if (error) {
-      return <p>Attendance error: {error.message}</p>;
+      throw new Error("Unable to load attendance records. Please try again.");
     }
 
     attendanceRecords = data ?? [];
@@ -162,14 +132,12 @@ export default async function DashboardPage() {
           >
             Manage Attendance →
           </Link>
-          {!adminError && admin && (
-            <Link
-              href="/admin/accounts"
-              className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-100 sm:w-auto"
-            >
-              Create Account
-            </Link>
-          )}
+          <Link
+            href="/admin/users"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-100 sm:w-auto"
+          >
+            Manage Accounts
+          </Link>
         </div>
 
         {/* Welcome Banner */}

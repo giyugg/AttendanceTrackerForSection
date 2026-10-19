@@ -40,12 +40,15 @@ Class reports cover the **50 most recent sessions**. Individual student reports 
 | --- | --- |
 | Application administrator | Create user accounts; manage students, enrollments, and subjects; create sessions; record attendance; and permanently delete students or sessions. |
 | Class president or secretary | Create attendance sessions and record or update attendance for the assigned class. |
+| Student | Access the Student dashboard, currently under construction. Class rosters, other students' records, attendance tools, and account management are unavailable. |
 
-Other signed-in users can view records where permitted by the Supabase database policies. Creating an account does not automatically grant administrator or officer access; assignments are maintained in `app_admins` and `class_officers`.
+Administrators can open `/admin/users` (**Accounts & Permissions**) to see user accounts and their current roles, then assign **Administrator**, **President**, **Secretary**, or **Student**. Administrator access is global; officer roles apply to the current BSIS 2B-G2 class. Admins cannot change their own role; another administrator must do that. New accounts default to Student, represented by the absence of administrator or current-class officer membership. Assignments remain in `app_admins` and `class_officers`, not user-editable Auth metadata.
+
+After signing in, `/dashboard` sends users to the appropriate workspace. Administrators keep the class dashboard. Presidents and Secretaries land on `/officer`, which is under construction and links to their existing attendance, roster, and report tools. Students land on `/student`, which is under construction. Protected pages check permissions on the server before fetching class records, and navigation shows the links available to that role.
 
 Public account registration is disabled. Need an account? Email [2025009221@ms.bulsu.edu.ph](mailto:2025009221@ms.bulsu.edu.ph) from your educational email address. Personal email providers such as Gmail are not accepted.
 
-Administrators listed in `app_admins` can open `/admin/accounts` to create an account with an educational email address and a temporary password of at least eight characters. Verify the requester's educational email ownership before creating the account: this operation marks the email as confirmed. It does not send a welcome or invitation email; share the temporary password privately. Administrator and class officer assignments must still be managed separately.
+Administrators listed in `app_admins` can open `/admin/accounts` to create an account with an educational email address and a temporary password of at least eight characters. Verify the requester's educational email ownership before creating the account: this operation marks the email as confirmed. It does not send a welcome or invitation email; share the temporary password privately. Change the new Student account's role in **Accounts & Permissions** when needed.
 
 Permanent deletion requires typed confirmation. Subjects with existing attendance sessions must be deactivated rather than deleted to preserve their history.
 
@@ -86,7 +89,7 @@ npm ci
 
 ### 2. Configure the Supabase backend
 
-Use an existing Attendly backend or obtain its database setup from the project maintainer. **This repository currently does not include database migrations, seed scripts, or SQL function definitions.** Environment variables alone do not provision the backend.
+Use an existing Attendly backend or obtain its database setup from the project maintainer. **The base database schema, seed data, and attendance SQL function definitions are not included.** The role-permissions migration extends an existing Attendly database; environment variables and this migration do not provision the base schema.
 
 The application expects these tables:
 
@@ -102,6 +105,10 @@ It also calls these database functions:
 - `delete_g2_attendance_session`
 
 The class data must match `BSIS 2B-G2`, academic year `2026-2027`, and term `1st Semester`. These values are currently specified in the application code.
+
+`supabase/inspect-permissions.sql` is a read-only query of policies, grants, and function definitions, without account data or API keys. The existing backend was inspected during this change: its attendance RPCs run with caller permissions and check administrator access. Its tables already have the permissive administrator/officer policies that the migration narrows.
+
+Apply `supabase/migrations/202610190001_manage_user_roles.sql` to the existing database using the Supabase SQL Editor before saving role changes. It adds the atomic `set_class_user_role` function, restricts direct role-table mutations, removes `TRUNCATE`/`REFERENCES`/`TRIGGER` grants from ordinary clients, and narrows roster/attendance access to administrators and assigned officers. Students stay limited to their placeholder until their personal attendance view is implemented. The migration preserves the existing permissive policies and narrows them with restrictive policies. This repository change does not apply itself to the hosted project; accounts and saved attendance are retained.
 
 In the hosted project's Supabase Auth general configuration, turn **Allow new users to sign up** **off**. This setting is required to prevent public account creation through Supabase's API as well as the application. Keep the **Email** provider enabled so existing and administrator-created accounts can sign in with email and password. See [Supabase's general configuration documentation](https://supabase.com/docs/guides/auth/general-configuration) and [password authentication documentation](https://supabase.com/docs/guides/auth/passwords).
 
@@ -119,7 +126,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 ```
 
-Use the project's public publishable key for the browser client. The service role key is required only by the server's administrator account creation operation; never prefix it with `NEXT_PUBLIC_`, expose it to browser code, or commit it. Add it to your hosting environment when deploying. Keep `.env.local` out of version control; it is already ignored by Git.
+Use the project's public publishable key for the browser client. The server key is required for administrator account creation and the administrator-only account directory. A Supabase Secret key (`sb_secret_...`) can be used as the value of `SUPABASE_SERVICE_ROLE_KEY`, as can the legacy service role key. Never prefix it with `NEXT_PUBLIC_`, expose it to browser code, or commit it. Add it to your hosting environment when deploying. Keep `.env.local` out of version control; it is already ignored by Git. Role updates use the signed-in administrator's session so the database can verify the actor directly.
 
 ### 4. Start the application
 
@@ -135,7 +142,7 @@ Open [http://localhost:3000](http://localhost:3000), sign in, and visit `/dashbo
 | --- | --- |
 | `npm run dev` | Start the local development server. |
 | `npm run lint` | Check the code with ESLint. |
-| `npm test` | Check account creation authorization and validation without a live Supabase project. |
+| `npm test` | Check account creation, role resolution, role changes, and permission guards without a live Supabase project. |
 | `npm run build` | Create a production build. |
 | `npm start` | Serve the production build after running `npm run build`. |
 
@@ -144,14 +151,20 @@ Open [http://localhost:3000](http://localhost:3000), sign in, and visit `/dashbo
 ```text
 app/
   admin/accounts/        Administrator-only account creation
+  admin/users/           Account directory and role management
   auth/                  Sign-in, account requests, confirmation, and password recovery
   dashboard/             Class overview and latest attendance statistics
+  officer/               President and Secretary dashboard placeholder
+  student/               Student dashboard placeholder
   students/              Roster management and individual student reports
   attendance/            Session creation and attendance recording
     history/             Class reports and CSV exports
     subjects/            Subject management
 components/              Shared navigation, authentication forms, and UI components
 lib/supabase/            Browser, server, and session-refresh Supabase clients
+lib/access.ts            Server-side authentication and role guards
+lib/roles.ts             Shared role labels and dashboard destinations
+supabase/                Role migration and read-only permission inspection
 proxy.ts                 Request handling for authentication and session refresh
 ```
 

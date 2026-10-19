@@ -1,20 +1,9 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireRole } from "@/lib/access";
 import HistoryReport, { type HistorySession } from "./history-report";
 
 export default async function AttendanceHistoryPage() {
-  const supabase = await createClient();
-
-  // 1. Verify authentication
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    redirect("/auth/login");
-  }
+  const { supabase } = await requireRole(["admin", "president", "secretary"]);
 
   // 2. Find BSIS 2B-G2
   const { data: classData, error: classError } = await supabase

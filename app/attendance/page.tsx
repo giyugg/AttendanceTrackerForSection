@@ -1,24 +1,14 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { connection } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireRole } from "@/lib/access";
+import { roleHome } from "@/lib/roles";
 import { formatSessionTime } from "@/lib/utils";
 import CreateSessionForm from "./create-session-form";
 import DeleteSessionButton from "./delete-session-button";
 
 export default async function AttendancePage() {
-  await connection();
-  const supabase = await createClient();
-
-  // Verify authentication.
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    redirect("/auth/login");
-  }
+  const { supabase, role } = await requireRole(["admin", "president", "secretary"]);
+  const canCreate = true;
+  const isAdmin = role === "admin";
 
   // Retrieve BSIS 2B-G2.
   const { data: classData, error: classError } = await supabase
@@ -36,29 +26,6 @@ export default async function AttendancePage() {
   if (!classData) {
     return <p>G2 class not found or access denied.</p>;
   }
-
-  // Determine whether the user can create sessions.
-  const { data: admin, error: adminError } = await supabase
-    .from("app_admins")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  const { data: officer, error: officerError } = await supabase
-    .from("class_officers")
-    .select("role")
-    .eq("class_id", classData.id)
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (adminError || officerError) {
-    throw new Error("Unable to verify permissions.");
-  }
-
-  const canCreate =
-    Boolean(admin) ||
-    officer?.role === "president" ||
-    officer?.role === "secretary";
 
   // Get active subjects from Supabase.
   let subjectOptions: {
@@ -100,7 +67,7 @@ export default async function AttendancePage() {
         {/* PAGE HEADER */}
         <header>
           <Link
-            href="/dashboard"
+            href={roleHome(role)}
             className="inline-flex items-center text-sm font-semibold text-[#2448A5] transition-colors hover:text-[#172B52]"
           >
             ← Back to Dashboard
@@ -192,7 +159,7 @@ export default async function AttendancePage() {
         {/* CREATE ATTENDANCE SESSION */}
 
         {/* SUBJECT MANAGEMENT — ADMIN ONLY */}
-        {Boolean(admin) && (
+        {isAdmin && (
           <section className="flex flex-col gap-4 rounded-2xl border border-[#DDE5F0] bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6">
             <div>
               <h2 className="text-lg font-bold text-[#172B52]">
@@ -294,7 +261,7 @@ export default async function AttendancePage() {
                   </Link>
 
                   {/* DELETE SESSION — ADMIN ONLY */}
-                  {Boolean(admin) && (
+                  {isAdmin && (
                     <DeleteSessionButton
                       sessionId={session.id}
                       sessionLabel={session.label}

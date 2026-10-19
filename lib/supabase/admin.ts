@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
+import { serverFetch } from "./fetch";
 
 export function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -12,6 +13,8 @@ export function createAdminClient() {
 
   // Keep privileged requests separate from the administrator's cookie session.
   return createClient(url, serviceRoleKey, {
+    global: { fetch: serverFetch },
+    db: { retry: false },
     auth: {
       autoRefreshToken: false,
       persistSession: false,

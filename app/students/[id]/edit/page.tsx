@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
+import { requireRole } from "@/lib/access";
 import EditStudentForm from "./edit-student-form";
 
 type PageProps = {
@@ -9,32 +9,7 @@ type PageProps = {
 
 export default async function EditStudentPage({ params }: PageProps) {
   const { id } = await params;
-  const supabase = await createClient();
-
-  // Check authentication.
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    redirect("/auth/login");
-  }
-
-  // Only administrators may edit student profiles.
-  const { data: admin, error: adminError } = await supabase
-    .from("app_admins")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (adminError) {
-    throw new Error("Unable to verify administrator access.");
-  }
-
-  if (!admin) {
-    return <main className="p-8">Access denied.</main>;
-  }
+  const { supabase } = await requireRole(["admin"]);
 
   // Find the BSIS 2B-G2 class.
   const { data: classData, error: classError } = await supabase

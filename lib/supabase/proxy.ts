@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars } from "../utils";
+import { serverFetch } from "./fetch";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -19,6 +20,8 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
+      global: { fetch: serverFetch },
+      db: { retry: false },
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -44,12 +47,21 @@ export async function updateSession(request: NextRequest) {
 
   // IMPORTANT: If you remove getClaims() and you use server-side rendering
   // with the Supabase client, your users may be randomly logged out.
-  const { data } = await supabase.auth.getClaims();
+  const { data, error } = await supabase.auth.getClaims();
   const user = data?.claims;
+
+  // A temporary outage is not a rejected session. Protected pages recheck access
+  // and can render the retry screen without sending a signed-in user to login.
+  const temporaryAuthFailure = error && (
+    error.name === "AuthRetryableFetchError" ||
+    error.status === 0 ||
+    (error.status !== undefined && error.status >= 500)
+  );
 
   if (
     request.nextUrl.pathname !== "/" &&
     !user &&
+    !temporaryAuthFailure &&
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/auth")
   ) {

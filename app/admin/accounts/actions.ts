@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { isEducationalEmail } from "@/lib/account-validation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -85,9 +86,11 @@ export async function createAccount(
       return fail("Account creation could not be confirmed. Check whether the account exists before trying again.");
     }
 
+    revalidatePath("/admin/users");
+
     return {
       success: true,
-      message: `Account created for ${email}. Share the temporary password privately. The account holder can use Forgot Password on the sign-in page to choose their own password.`,
+      message: `Student account created for ${email}. You can change the role in Accounts & Permissions. Share the temporary password privately. The account holder can use Forgot Password on the sign-in page to choose their own password.`,
     };
   } catch {
     return fail("Account creation could not be confirmed. Check whether the account exists before trying again.");

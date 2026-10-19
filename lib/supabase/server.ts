@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { serverFetch } from "./fetch";
 
 /**
  * Especially important if using Fluid compute: Don't put this client in a
@@ -13,6 +14,8 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
+      global: { fetch: serverFetch },
+      db: { retry: false },
       cookies: {
         getAll() {
           return cookieStore.getAll();

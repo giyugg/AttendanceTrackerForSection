@@ -43,12 +43,12 @@ export default async function AccountsPage() {
   return (
     <main className="min-h-screen bg-[#F6F8FC] px-4 py-8 text-[#17263D] sm:px-8">
       <div className="mx-auto max-w-3xl space-y-8">
-        <Link href="/dashboard" className="inline-flex min-h-11 items-center text-sm font-semibold text-[#2448A5] hover:underline">Back to Dashboard</Link>
+        <Link href="/admin/users" className="inline-flex min-h-11 items-center text-sm font-semibold text-[#2448A5] hover:underline">Back to Accounts &amp; Permissions</Link>
         <header>
           <p className="text-xs font-bold uppercase tracking-widest text-[#2448A5]">Attendly / Administration</p>
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-[#172B52] sm:text-4xl">Create an account</h1>
           <p className="mt-3 text-sm leading-7 text-slate-500">
-            Create an account after verifying the request from the account holder&apos;s educational email. Accounts do not receive administrator or class officer permissions automatically.
+            Create an account after verifying the request from the account holder&apos;s educational email. New accounts start as Students. You can change their role in Accounts &amp; Permissions.
           </p>
         </header>
         {isConfigured ? (

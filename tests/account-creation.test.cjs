@@ -53,6 +53,11 @@ function actionHarness(options = {}) {
   const user = Object.hasOwn(options, "user") ? options.user : { id: "admin-id" };
   const action = loadTypeScript("app/admin/accounts/actions.ts", {
     "@/lib/account-validation": validation,
+    "next/cache": {
+      revalidatePath(route) {
+        calls.push({ type: "revalidate", route });
+      },
+    },
     "@/lib/supabase/server": {
       async createClient() {
         calls.push({ type: "session" });
@@ -121,6 +126,9 @@ function actionHarness(options = {}) {
       );
       assert.deepEqual(Object.keys(result).sort(), ["message", "success"]);
       assert.equal(JSON.stringify(result).includes(temporaryPassword), false);
+      if (!result.success) {
+        assert.equal(calls.some(({ type }) => type === "revalidate"), false);
+      }
       return result;
     },
   };
@@ -207,13 +215,14 @@ test("creation uses the verified normalized email and grants no application role
       assert.match(result.message, /student@ms\.bulsu\.edu\.ph/);
       assert.equal(result.message.includes(password), false);
       assert.deepEqual(harness.calls.map(({ type }) => type), [
-        "session", "getUser", "membership", "adminFactory", "createUser",
+        "session", "getUser", "membership", "adminFactory", "createUser", "revalidate",
       ]);
-      assert.deepEqual(harness.calls.at(-1).input, {
+      assert.deepEqual(harness.calls.find(({ type }) => type === "createUser").input, {
         email: "student@ms.bulsu.edu.ph",
         password,
         email_confirm: true,
       });
+      assert.deepEqual(harness.calls.at(-1), { type: "revalidate", route: "/admin/users" });
     });
   }
 });
@@ -273,6 +282,7 @@ test("educational email validation respects complete domain boundaries", () => {
 });
 
 test("admin client requires both configuration values and disables session persistence", () => {
+  const serverFetch = () => assert.fail("Client factory must not issue a request");
   for (const env of [
     {},
     { NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co" },
@@ -280,6 +290,7 @@ test("admin client requires both configuration values and disables session persi
   ]) {
     const { createAdminClient } = loadTypeScript("lib/supabase/admin.ts", {
       "server-only": {},
+      "./fetch": { serverFetch },
       "@supabase/supabase-js": {
         createClient() { assert.fail("Incomplete configuration must not create a client"); },
       },
@@ -295,12 +306,16 @@ test("admin client requires both configuration values and disables session persi
   let clientCalls = 0;
   const { createAdminClient } = loadTypeScript("lib/supabase/admin.ts", {
     "server-only": {},
+    "./fetch": { serverFetch },
     "@supabase/supabase-js": {
       createClient(url, key, config) {
         clientCalls += 1;
         assert.equal(url, env.NEXT_PUBLIC_SUPABASE_URL);
         assert.equal(key, env.SUPABASE_SERVICE_ROLE_KEY);
+        assert.equal(config.global.fetch, serverFetch);
         assert.deepEqual(JSON.parse(JSON.stringify(config)), {
+          global: {},
+          db: { retry: false },
           auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
         });
         return sentinel;

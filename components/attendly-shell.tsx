@@ -4,13 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { LogoutButton } from "@/components/logout-button";
+import { ROLE_LABELS, roleHome, type AppRole } from "@/lib/roles";
 
-const navItems = [
-  {
-    href: "/dashboard",
-    label: "Dashboard",
-    icon: "dashboard",
-  },
+const classNavItems = [
   {
     href: "/students",
     label: "Students",
@@ -28,7 +24,8 @@ const navItems = [
   },
 ] as const;
 
-type NavIconName = (typeof navItems)[number]["icon"];
+type NavIconName = "dashboard" | "students" | "attendance" | "reports";
+type NavItem = { href: string; label: string; icon: NavIconName };
 
 function NavIcon({ name }: { name: NavIconName }) {
   return (
@@ -82,9 +79,9 @@ function NavIcon({ name }: { name: NavIconName }) {
   );
 }
 
-function Brand() {
+function Brand({ home }: { home: string }) {
   return (
-    <Link href="/dashboard" className="inline-flex items-center gap-3">
+    <Link href={home} className="inline-flex items-center gap-3">
       <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#2448A5] text-xl font-bold text-white">
         A
       </span>
@@ -102,29 +99,36 @@ function Brand() {
   );
 }
 
-export default function AttendlyShell({ children }: { children: ReactNode }) {
+export default function AttendlyShell({
+  children,
+  role,
+}: {
+  children: ReactNode;
+  role: AppRole;
+}) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const home = roleHome(role);
+  const navItems: NavItem[] = [
+    { href: home, label: "Dashboard", icon: "dashboard" },
+    ...(role === "student" ? [] : classNavItems),
+    ...(role === "admin"
+      ? [{ href: "/admin/users", label: "Accounts", icon: "students" as const }]
+      : []),
+  ];
 
   // Match complete paths or their child routes.
   function matchesRoute(route: string) {
     return pathname === route || pathname.startsWith(`${route}/`);
   }
 
-  // Only application pages receive shared navigation.
-  // Authentication and public pages stay unchanged.
-  const isApplicationPage =
-    navItems.some((item) => matchesRoute(item.href)) || matchesRoute("/admin");
-
   // Reports must take priority over the parent
   // /attendance route when highlighting navigation.
   const activeHref = matchesRoute("/attendance/history")
     ? "/attendance/history"
-    : navItems.find((item) => matchesRoute(item.href))?.href;
-
-  if (!isApplicationPage) {
-    return <>{children}</>;
-  }
+    : matchesRoute("/admin")
+      ? "/admin/users"
+      : navItems.find((item) => matchesRoute(item.href))?.href;
 
   function navigationLinks() {
     return navItems.map((item) => {
@@ -154,7 +158,7 @@ export default function AttendlyShell({ children }: { children: ReactNode }) {
       {/* DESKTOP SIDEBAR */}
       <aside className="hidden w-64 shrink-0 border-r border-[#DDE5F0] bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:p-5">
         <div className="px-2 py-3">
-          <Brand />
+          <Brand home={home} />
         </div>
 
         <div className="mt-10">
@@ -169,6 +173,9 @@ export default function AttendlyShell({ children }: { children: ReactNode }) {
 
         {/* SIDEBAR FOOTER */}
         <div className="mt-auto space-y-3">
+          <p className="px-4 text-xs font-semibold text-[#2448A5]">
+            {ROLE_LABELS[role]}
+          </p>
           <div className="rounded-xl bg-[#F6F8FC] p-4">
             <p className="text-sm font-bold text-[#172B52]">BSIS 2B-G2</p>
 
@@ -184,7 +191,7 @@ export default function AttendlyShell({ children }: { children: ReactNode }) {
         {/* MOBILE HEADER */}
         <header className="sticky top-0 z-40 border-b border-[#DDE5F0] bg-white/95 backdrop-blur-sm lg:hidden">
           <div className="flex min-h-20 items-center justify-between gap-3 px-4 sm:px-6">
-            <Brand />
+            <Brand home={home} />
 
             <button
               type="button"
@@ -224,6 +231,9 @@ export default function AttendlyShell({ children }: { children: ReactNode }) {
             }`}
           >
             <div className="space-y-1">{navigationLinks()}</div>
+            <p className="mt-4 px-4 text-xs font-semibold text-[#2448A5]">
+              {ROLE_LABELS[role]}
+            </p>
 
             <p className="mt-4 border-t border-[#DDE5F0] pt-4 text-xs text-slate-500">
               BSIS 2B-G2 • AY 2026–2027
