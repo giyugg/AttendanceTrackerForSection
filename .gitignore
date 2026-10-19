@@ -44,3 +44,10 @@ next-env.d.ts
 # tests
 /tests
 /tests/*.cjs
+
+# Keep maintained regression tests; other local test artifacts stay ignored.
+!/tests/
+/tests/*
+!/tests/account-creation.test.cjs
+!/tests/role-permissions.test.cjs
+!/tests/server-requests.test.cjs
